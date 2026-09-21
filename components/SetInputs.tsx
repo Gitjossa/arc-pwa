@@ -1,5 +1,7 @@
 "use client";
 
+import type { Unit } from "@/lib/types";
+
 function RepsInput({
   resetKey,
   value,
@@ -31,10 +33,12 @@ function RepsInput({
 function KgInput({
   resetKey,
   placeholder,
+  unit,
   onCommit,
 }: {
   resetKey: string;
   placeholder: string;
+  unit: Unit;
   onCommit: (value: string) => void;
 }) {
   return (
@@ -54,7 +58,7 @@ function KgInput({
           }
         }}
       />
-      <span className="unit-suffix">kg</span>
+      <span className="unit-suffix">{unit}</span>
     </div>
   );
 }
