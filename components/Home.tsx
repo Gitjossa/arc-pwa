@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useSyncExternalStore } from "react";
 import { currentStreakWeeks, thisWeekVolume } from "@/lib/history";
-import { quoteOfTheDay } from "@/lib/quotes";
 import { getServerSnapshot, getSnapshot, subscribe } from "@/lib/store";
 
 function greeting(): string {
@@ -20,17 +19,12 @@ export default function Home() {
   const { history } = data;
   const streak = useMemo(() => currentStreakWeeks(history), [history]);
   const volume = useMemo(() => thisWeekVolume(history), [history]);
-  const quote = useMemo(() => quoteOfTheDay(), []);
 
   return (
     <div className="wrap home-wrap">
       <div className="home-header">
         <p className="home-greeting">{greeting()}</p>
         <h1>Klaar om te trainen?</h1>
-      </div>
-
-      <div className="quote-card">
-        <p>&ldquo;{quote}&rdquo;</p>
       </div>
 
       <div className="stat-row">
