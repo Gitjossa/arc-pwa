@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { getServerSnapshot, getSnapshot, subscribe } from "@/lib/store";
 import Onboarding from "./Onboarding";
 import TabBar from "./TabBar";
+import UndoToast from "./UndoToast";
 
 function noopSubscribe() {
   return () => {};
@@ -25,14 +26,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  if (!data.settings.onboarded) {
-    return <Onboarding />;
-  }
-
   return (
     <div className="app-shell">
-      <main className="app-scroll">{children}</main>
-      <TabBar />
+      {data.settings.onboarded ? <main className="app-scroll">{children}</main> : <Onboarding />}
+      {data.settings.onboarded && <TabBar />}
+      <UndoToast />
     </div>
   );
 }

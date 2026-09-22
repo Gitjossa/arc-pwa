@@ -79,6 +79,68 @@ function update(updater: (prev: AppData) => AppData): void {
   commit(updater(getState()));
 }
 
+// ---- Undo ----
+
+export interface UndoSnapshot {
+  message: string;
+  token: number;
+}
+
+let undoData: AppData | null = null;
+// Separate from undoData so getUndoSnapshot can return a referentially stable
+// value to useSyncExternalStore — a fresh object literal on every call would
+// make React think the store changes on every render, causing an infinite loop.
+let publicUndoSnapshot: UndoSnapshot | null = null;
+let undoTokenSeq = 0;
+const undoListeners = new Set<Listener>();
+
+function notifyUndo(): void {
+  undoListeners.forEach((listener) => listener());
+}
+
+/** Captures the current state under `message` before a destructive action, so it can be undone briefly. */
+function pushUndo(message: string): void {
+  const token = ++undoTokenSeq;
+  undoData = getState();
+  publicUndoSnapshot = { message, token };
+  notifyUndo();
+  setTimeout(() => {
+    if (publicUndoSnapshot?.token === token) {
+      undoData = null;
+      publicUndoSnapshot = null;
+      notifyUndo();
+    }
+  }, 6000);
+}
+
+export function subscribeUndo(listener: Listener): () => void {
+  undoListeners.add(listener);
+  return () => undoListeners.delete(listener);
+}
+
+export function getUndoSnapshot(): UndoSnapshot | null {
+  return publicUndoSnapshot;
+}
+
+export function getUndoServerSnapshot(): UndoSnapshot | null {
+  return null;
+}
+
+export function undoLast(): void {
+  if (!undoData) return;
+  commit(undoData);
+  undoData = null;
+  publicUndoSnapshot = null;
+  notifyUndo();
+}
+
+export function dismissUndo(): void {
+  if (!publicUndoSnapshot) return;
+  undoData = null;
+  publicUndoSnapshot = null;
+  notifyUndo();
+}
+
 export function exerciseKey(dayId: string, exerciseId: string): string {
   return `${dayId}__${exerciseId}`;
 }
@@ -130,6 +192,7 @@ export function commitSetField(
 
 /** Archives the filled-in sets for this day into history, then clears the "done" flags. */
 export function finishWorkout(day: DayDef): void {
+  pushUndo("Workout opgeslagen");
   update((prev) => {
     const loggedExercises = day.exercises
       .map((exercise) => {
@@ -180,6 +243,7 @@ export function renameDay(dayId: string, name: string): void {
 }
 
 export function deleteDay(dayId: string): void {
+  pushUndo("Dag verwijderd");
   update((prev) => ({
     ...prev,
     program: { days: prev.program.days.filter((d) => d.id !== dayId) },
@@ -231,6 +295,7 @@ export function updateExercise(
 }
 
 export function deleteExercise(dayId: string, exerciseId: string): void {
+  pushUndo("Oefening verwijderd");
   update((prev) => ({
     ...prev,
     program: {
@@ -311,5 +376,6 @@ export function importData(json: string): { ok: true } | { ok: false; error: str
 }
 
 export function resetAllData(): void {
+  pushUndo("Alle data gewist");
   commit(DEFAULT_DATA);
 }

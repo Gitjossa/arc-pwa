@@ -10,9 +10,9 @@ const appDir = path.join(root, "..", "app");
 
 mkdirSync(iconsDir, { recursive: true });
 
-const BG = "#09090a";
-const ACCENT_A = "#ff5a1f";
-const ACCENT_B = "#ffb238";
+const BG = "#07080a";
+const ACCENT_A = "#c8ff3d";
+const ACCENT_B = "#e9ff8a";
 
 // A simple barbell mark: horizontal bar with two plates near each end.
 function barbellSvg({ size, padding, background }) {

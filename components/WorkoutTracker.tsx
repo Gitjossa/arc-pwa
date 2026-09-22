@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { personalRecords } from "@/lib/history";
-import { haptic } from "@/lib/haptics";
 import {
   commitSetField,
   finishWorkout,
@@ -13,7 +12,7 @@ import {
   subscribe,
   toggleDone,
 } from "@/lib/store";
-import type { DayDef, ExerciseDef } from "@/lib/types";
+import type { DayDef } from "@/lib/types";
 import { KgInput, RepsInput } from "./SetInputs";
 
 function CheckIcon() {
@@ -60,23 +59,6 @@ export default function WorkoutTracker() {
   const total = day.exercises.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
   const unit = data.settings.unit;
-
-  function handleToggleDone(exercise: ExerciseDef) {
-    haptic(12);
-    toggleDone(day.id, exercise);
-  }
-
-  function handleKgCommit(exercise: ExerciseDef, setIdx: number, value: string) {
-    commitSetField(day.id, exercise, setIdx, "kg", value);
-    const pr = records.get(exercise.id);
-    const isPr = Number(value) > (pr?.weight ?? 0);
-    haptic(isPr ? [15, 60, 15, 60, 15] : 10);
-  }
-
-  function handleFinish() {
-    haptic([10, 40, 10]);
-    finishWorkout(day);
-  }
 
   return (
     <div className="wrap">
@@ -150,11 +132,11 @@ export default function WorkoutTracker() {
                       role="checkbox"
                       aria-checked={rec.done}
                       tabIndex={0}
-                      onClick={() => handleToggleDone(exercise)}
+                      onClick={() => toggleDone(day.id, exercise)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          handleToggleDone(exercise);
+                          toggleDone(day.id, exercise);
                         }
                       }}
                     >
@@ -178,11 +160,11 @@ export default function WorkoutTracker() {
                             resetKey={resetKey}
                             unit={unit}
                             placeholder={setRec.kg || unit}
-                            onCommit={(v) => handleKgCommit(exercise, setIdx, v)}
+                            onCommit={(v) => commitSetField(day.id, exercise, setIdx, "kg", v)}
                           />
                           {isPr && (
                             <span className="pr-badge" title="Nieuw persoonlijk record">
-                              🏆
+                              PR
                             </span>
                           )}
                         </div>
@@ -198,7 +180,7 @@ export default function WorkoutTracker() {
             <button
               type="button"
               className="finish-btn"
-              onClick={handleFinish}
+              onClick={() => finishWorkout(day)}
               disabled={doneCount === 0}
             >
               Workout afronden &amp; opslaan in historie
