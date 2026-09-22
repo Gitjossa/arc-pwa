@@ -1,7 +1,7 @@
-import sharp from "sharp";
-import { mkdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "..", "public");
@@ -10,54 +10,20 @@ const appDir = path.join(root, "..", "app");
 
 mkdirSync(iconsDir, { recursive: true });
 
-const BG = "#07080a";
-const ACCENT_A = "#c8ff3d";
-const ACCENT_B = "#e9ff8a";
+const logoPath = path.join(root, "logo-source.svg");
+const logoSvg = readFileSync(logoPath, "utf8");
 
-// A simple barbell mark: horizontal bar with two plates near each end.
-function barbellSvg({ size, padding, background }) {
-  const s = size;
-  const barY = s / 2;
-  const barHeight = s * 0.09;
-  const plateWidth = s * 0.1;
-  const plateHeight = s * 0.46;
-  const innerLeft = padding;
-  const innerRight = s - padding;
-
-  const bg = background ? `<rect width="${s}" height="${s}" fill="${BG}"/>` : "";
-
-  return `
-<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${ACCENT_A}"/>
-      <stop offset="100%" stop-color="${ACCENT_B}"/>
-    </linearGradient>
-  </defs>
-  ${bg}
-  <rect x="${innerLeft}" y="${barY - barHeight / 2}" width="${innerRight - innerLeft}" height="${barHeight}" rx="${barHeight / 2}" fill="url(#grad)"/>
-  <rect x="${innerLeft - plateWidth * 0.15}" y="${barY - plateHeight / 2}" width="${plateWidth}" height="${plateHeight}" rx="${plateWidth / 2}" fill="url(#grad)"/>
-  <rect x="${innerRight - plateWidth * 0.85}" y="${barY - plateHeight / 2}" width="${plateWidth}" height="${plateHeight}" rx="${plateWidth / 2}" fill="url(#grad)"/>
-</svg>`;
+async function renderPng(size, outPath) {
+  await sharp(Buffer.from(logoSvg)).resize(size, size).png().toFile(outPath);
 }
 
-async function renderPng(svg, size, outPath) {
-  await sharp(Buffer.from(svg)).resize(size, size).png().toFile(outPath);
-}
-
-const favicon = barbellSvg({ size: 512, padding: 512 * 0.18, background: true });
-
-await renderPng(favicon, 192, path.join(iconsDir, "icon-192.png"));
-await renderPng(favicon, 512, path.join(iconsDir, "icon-512.png"));
-await renderPng(
-  barbellSvg({ size: 512, padding: 512 * 0.3, background: true }),
-  512,
-  path.join(iconsDir, "icon-maskable-512.png"),
-);
-await renderPng(favicon, 180, path.join(appDir, "apple-icon.png"));
+await renderPng(192, path.join(iconsDir, "icon-192.png"));
+await renderPng(512, path.join(iconsDir, "icon-512.png"));
+// The logo already sits well inside its canvas, so it's safe to reuse as-is for maskable.
+await renderPng(512, path.join(iconsDir, "icon-maskable-512.png"));
+await renderPng(180, path.join(appDir, "apple-icon.png"));
 
 // app/icon.svg for the browser tab favicon (Next.js file convention)
-import { writeFileSync } from "node:fs";
-writeFileSync(path.join(appDir, "icon.svg"), barbellSvg({ size: 64, padding: 64 * 0.18, background: true }).trim());
+copyFileSync(logoPath, path.join(appDir, "icon.svg"));
 
-console.log("Icons generated.");
+console.log("Icons generated from logo-source.svg.");
