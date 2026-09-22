@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { personalRecords } from "@/lib/history";
 import {
@@ -36,7 +37,12 @@ function dayLabel(day: DayDef): string {
 export default function WorkoutTracker() {
   const data = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const days = data.program.days;
-  const [activeDay, setActiveDay] = useState(0);
+  const searchParams = useSearchParams();
+  const requestedDayId = searchParams.get("day");
+  const [activeDay, setActiveDay] = useState(() => {
+    const idx = days.findIndex((d) => d.id === requestedDayId);
+    return idx >= 0 ? idx : 0;
+  });
   const records = useMemo(() => personalRecords(data.history), [data.history]);
 
   if (days.length === 0) {

@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useSyncExternalStore } from "react";
 import { currentStreakWeeks, thisWeekVolume } from "@/lib/history";
 import { getServerSnapshot, getSnapshot, subscribe } from "@/lib/store";
+import type { DayDef } from "@/lib/types";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -14,9 +15,14 @@ function greeting(): string {
   return "Goedenavond";
 }
 
+function dayLabel(day: DayDef): string {
+  return day.name.trim().charAt(0).toUpperCase() || "?";
+}
+
 export default function Home() {
   const data = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { history } = data;
+  const days = data.program.days;
   const streak = useMemo(() => currentStreakWeeks(history), [history]);
   const volume = useMemo(() => thisWeekVolume(history), [history]);
 
@@ -44,9 +50,29 @@ export default function Home() {
         </div>
       </div>
 
-      <Link href="/vandaag" className="start-btn">
-        Start je training
-      </Link>
+      {days.length === 0 ? (
+        <Link href="/schema" className="start-btn">
+          Stel je schema samen
+        </Link>
+      ) : (
+        <div className="day-start-list">
+          {days.map((day) => (
+            <Link key={day.id} href={`/vandaag?day=${day.id}`} className="day-start-btn">
+              <span className="day-start-badge">{dayLabel(day)}</span>
+              <span className="day-start-name">{day.name}</span>
+              <svg viewBox="0 0 24 24" fill="none" className="day-start-arrow">
+                <path
+                  d="M9 5l7 7-7 7"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
