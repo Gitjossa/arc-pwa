@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { personalRecords } from "@/lib/history";
+import { haptic } from "@/lib/haptics";
 import {
   commitSetField,
   finishWorkout,
@@ -11,7 +13,7 @@ import {
   subscribe,
   toggleDone,
 } from "@/lib/store";
-import type { DayDef } from "@/lib/types";
+import type { DayDef, ExerciseDef } from "@/lib/types";
 import { KgInput, RepsInput } from "./SetInputs";
 
 function CheckIcon() {
@@ -36,6 +38,7 @@ export default function WorkoutTracker() {
   const data = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const days = data.program.days;
   const [activeDay, setActiveDay] = useState(0);
+  const records = useMemo(() => personalRecords(data.history), [data.history]);
 
   if (days.length === 0) {
     return (
@@ -57,6 +60,23 @@ export default function WorkoutTracker() {
   const total = day.exercises.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
   const unit = data.settings.unit;
+
+  function handleToggleDone(exercise: ExerciseDef) {
+    haptic(12);
+    toggleDone(day.id, exercise);
+  }
+
+  function handleKgCommit(exercise: ExerciseDef, setIdx: number, value: string) {
+    commitSetField(day.id, exercise, setIdx, "kg", value);
+    const pr = records.get(exercise.id);
+    const isPr = Number(value) > (pr?.weight ?? 0);
+    haptic(isPr ? [15, 60, 15, 60, 15] : 10);
+  }
+
+  function handleFinish() {
+    haptic([10, 40, 10]);
+    finishWorkout(day);
+  }
 
   return (
     <div className="wrap">
@@ -105,6 +125,7 @@ export default function WorkoutTracker() {
             {day.exercises.map((exercise) => {
               const rec = getRecord(data.draft, day.id, exercise);
               const lastFilled = rec.sets.filter((s) => s.reps && s.kg);
+              const pr = records.get(exercise.id);
 
               return (
                 <div
@@ -117,15 +138,10 @@ export default function WorkoutTracker() {
                       <div className="ex-last">
                         {lastFilled.length ? (
                           <>
-                            vorige keer:{" "}
-                            <b>
-                              {lastFilled
-                                .map((s) => `${s.reps}×${s.kg}${unit}`)
-                                .join(", ")}
-                            </b>
+                            vorige keer: <b>{lastFilled.map((s) => `${s.reps}×${s.kg}${unit}`).join(", ")}</b>
                           </>
                         ) : (
-                          " "
+                          " "
                         )}
                       </div>
                     </div>
@@ -134,11 +150,11 @@ export default function WorkoutTracker() {
                       role="checkbox"
                       aria-checked={rec.done}
                       tabIndex={0}
-                      onClick={() => toggleDone(day.id, exercise)}
+                      onClick={() => handleToggleDone(exercise)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          toggleDone(day.id, exercise);
+                          handleToggleDone(exercise);
                         }
                       }}
                     >
@@ -149,8 +165,9 @@ export default function WorkoutTracker() {
                   <div className="set-rows">
                     {rec.sets.map((setRec, setIdx) => {
                       const resetKey = `${day.id}-${exercise.id}-${setIdx}`;
+                      const isPr = Boolean(setRec.kg) && Number(setRec.kg) > (pr?.weight ?? 0);
                       return (
-                        <div className="set-row" key={setIdx}>
+                        <div className={`set-row${isPr ? " is-pr" : ""}`} key={setIdx}>
                           <div className="set-num">{setIdx + 1}.</div>
                           <RepsInput
                             resetKey={resetKey}
@@ -161,8 +178,13 @@ export default function WorkoutTracker() {
                             resetKey={resetKey}
                             unit={unit}
                             placeholder={setRec.kg || unit}
-                            onCommit={(v) => commitSetField(day.id, exercise, setIdx, "kg", v)}
+                            onCommit={(v) => handleKgCommit(exercise, setIdx, v)}
                           />
+                          {isPr && (
+                            <span className="pr-badge" title="Nieuw persoonlijk record">
+                              🏆
+                            </span>
+                          )}
                         </div>
                       );
                     })}
@@ -176,7 +198,7 @@ export default function WorkoutTracker() {
             <button
               type="button"
               className="finish-btn"
-              onClick={() => finishWorkout(day)}
+              onClick={handleFinish}
               disabled={doneCount === 0}
             >
               Workout afronden &amp; opslaan in historie

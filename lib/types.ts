@@ -51,6 +51,7 @@ export type Unit = "kg" | "lbs";
 
 export interface Settings {
   unit: Unit;
+  onboarded: boolean;
 }
 
 export interface AppData {

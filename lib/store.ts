@@ -1,3 +1,4 @@
+import { todayIso } from "./date";
 import { DEFAULT_PROGRAM } from "./defaultProgram";
 import { createId } from "./id";
 import type {
@@ -6,6 +7,7 @@ import type {
   DraftState,
   ExerciseDef,
   ExerciseRecord,
+  Program,
   Settings,
   WorkoutSession,
 } from "./types";
@@ -13,10 +15,10 @@ import type {
 const STORAGE_KEY = "arc_app_data_v1";
 
 const DEFAULT_DATA: AppData = {
-  program: DEFAULT_PROGRAM,
+  program: { days: [] },
   draft: {},
   history: [],
-  settings: { unit: "kg" },
+  settings: { unit: "kg", onboarded: false },
 };
 
 type Listener = () => void;
@@ -34,7 +36,9 @@ function readFromStorage(): AppData {
       program: parsed.program ?? DEFAULT_DATA.program,
       draft: parsed.draft ?? {},
       history: parsed.history ?? [],
-      settings: { ...DEFAULT_DATA.settings, ...parsed.settings },
+      // Data already existed on disk, so this device has used the app before —
+      // never re-trigger onboarding just because the flag predates this field.
+      settings: { ...DEFAULT_DATA.settings, onboarded: true, ...parsed.settings },
     };
   } catch {
     return DEFAULT_DATA;
@@ -122,12 +126,6 @@ export function commitSetField(
       draft: { ...prev.draft, [exerciseKey(dayId, exercise.id)]: { ...rec, sets } },
     };
   });
-}
-
-function todayIso(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 /** Archives the filled-in sets for this day into history, then clears the "done" flags. */
@@ -264,6 +262,20 @@ export function moveExercise(dayId: string, exerciseId: string, direction: -1 | 
 
 export function setUnit(unit: Settings["unit"]): void {
   update((prev) => ({ ...prev, settings: { ...prev.settings, unit } }));
+}
+
+// ---- Onboarding ----
+
+export function chooseProgram(program: Program): void {
+  update((prev) => ({ ...prev, program, settings: { ...prev.settings, onboarded: true } }));
+}
+
+export function chooseDefaultProgram(): void {
+  chooseProgram(DEFAULT_PROGRAM);
+}
+
+export function chooseBlankProgram(): void {
+  chooseProgram({ days: [] });
 }
 
 // ---- Data management ----

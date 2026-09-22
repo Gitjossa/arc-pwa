@@ -8,6 +8,16 @@ const common = {
   strokeLinejoin: "round" as const,
 };
 
+export function HomeIcon({ active }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...common} opacity={active ? 1 : 0.6}>
+      <path d="M4 11.5L12 4l8 7.5" />
+      <path d="M6 10v9.5h12V10" />
+      <path d="M10 19.5v-6h4v6" />
+    </svg>
+  );
+}
+
 export function TodayIcon({ active }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...common} opacity={active ? 1 : 0.6}>

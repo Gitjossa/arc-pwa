@@ -1,5 +1,5 @@
-import WorkoutTracker from "@/components/WorkoutTracker";
+import Home from "@/components/Home";
 
-export default function Home() {
-  return <WorkoutTracker />;
+export default function HomePage() {
+  return <Home />;
 }

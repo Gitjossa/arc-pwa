@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import AppShell from "@/components/AppShell";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
-import TabBar from "@/components/TabBar";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,8 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="nl" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
-        <div className="app-content">{children}</div>
-        <TabBar />
+        <AppShell>{children}</AppShell>
         <RegisterServiceWorker />
       </body>
     </html>

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HistoryIcon, SchemaIcon, SettingsIcon, TodayIcon } from "./icons";
+import { HistoryIcon, HomeIcon, SchemaIcon, SettingsIcon, TodayIcon } from "./icons";
 
 const TABS = [
-  { href: "/", label: "Vandaag", Icon: TodayIcon },
+  { href: "/", label: "Home", Icon: HomeIcon },
+  { href: "/vandaag", label: "Vandaag", Icon: TodayIcon },
   { href: "/schema", label: "Schema", Icon: SchemaIcon },
   { href: "/historie", label: "Historie", Icon: HistoryIcon },
   { href: "/instellingen", label: "Instellingen", Icon: SettingsIcon },
