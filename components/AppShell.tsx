@@ -30,9 +30,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
-      <div className="app-content">{children}</div>
+    <div className="app-shell">
+      <main className="app-scroll">{children}</main>
       <TabBar />
-    </>
+    </div>
   );
 }
