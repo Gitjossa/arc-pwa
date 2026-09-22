@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useSyncExternalStore } from "react";
+import { countdownProgress } from "@/lib/countdown";
 import { currentStreakWeeks, thisWeekVolume } from "@/lib/history";
 import { getServerSnapshot, getSnapshot, subscribe } from "@/lib/store";
 import type { DayDef } from "@/lib/types";
@@ -25,6 +26,10 @@ export default function Home() {
   const days = data.program.days;
   const streak = useMemo(() => currentStreakWeeks(history), [history]);
   const volume = useMemo(() => thisWeekVolume(history), [history]);
+  const countdown = useMemo(
+    () => countdownProgress(data.settings.countdownStart, data.settings.countdownEnd),
+    [data.settings.countdownStart, data.settings.countdownEnd],
+  );
 
   return (
     <div className="wrap home-wrap">
@@ -49,6 +54,23 @@ export default function Home() {
           <div className="stat-label">sessies gelogd</div>
         </div>
       </div>
+
+      {data.settings.countdownEnabled && (
+        <div className="countdown-card">
+          <div className="countdown-head">
+            <span className="countdown-title">AYCE-countdown</span>
+            <span className="countdown-pct">{countdown.pct}%</span>
+          </div>
+          <div className="countdown-track">
+            <div className="countdown-fill" style={{ width: `${countdown.pct}%` }} />
+          </div>
+          <p className="countdown-caption">
+            {countdown.daysLeft === 0
+              ? "Laatste dag!"
+              : `Nog ${countdown.daysLeft} ${countdown.daysLeft === 1 ? "dag" : "dagen"} te gaan`}
+          </p>
+        </div>
+      )}
 
       {days.length === 0 ? (
         <Link href="/schema" className="start-btn">

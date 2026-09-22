@@ -18,7 +18,13 @@ const DEFAULT_DATA: AppData = {
   program: { days: [] },
   draft: {},
   history: [],
-  settings: { unit: "kg", onboarded: false },
+  settings: {
+    unit: "kg",
+    onboarded: false,
+    countdownEnabled: false,
+    countdownStart: "2026-09-21",
+    countdownEnd: "2026-12-31",
+  },
 };
 
 type Listener = () => void;
@@ -327,6 +333,17 @@ export function moveExercise(dayId: string, exerciseId: string, direction: -1 | 
 
 export function setUnit(unit: Settings["unit"]): void {
   update((prev) => ({ ...prev, settings: { ...prev.settings, unit } }));
+}
+
+export function setCountdownEnabled(enabled: boolean): void {
+  update((prev) => ({ ...prev, settings: { ...prev.settings, countdownEnabled: enabled } }));
+}
+
+export function setCountdownRange(startDate: string, endDate: string): void {
+  update((prev) => ({
+    ...prev,
+    settings: { ...prev.settings, countdownStart: startDate, countdownEnd: endDate },
+  }));
 }
 
 // ---- Onboarding ----

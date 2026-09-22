@@ -2,8 +2,19 @@
 
 import { useRef, useState } from "react";
 import { useSyncExternalStore } from "react";
-import { exportData, getServerSnapshot, getSnapshot, importData, resetAllData, setUnit, subscribe } from "@/lib/store";
+import {
+  exportData,
+  getServerSnapshot,
+  getSnapshot,
+  importData,
+  resetAllData,
+  setCountdownEnabled,
+  setCountdownRange,
+  setUnit,
+  subscribe,
+} from "@/lib/store";
 import type { Unit } from "@/lib/types";
+import Switch from "./Switch";
 
 export default function SettingsView() {
   const data = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -71,6 +82,43 @@ export default function SettingsView() {
           ))}
         </div>
         <p className="settings-hint">Verandert alleen het label, geen automatische omrekening.</p>
+      </div>
+
+      <div className="settings-card">
+        <div className="settings-row">
+          <div className="settings-label settings-label-inline">AYCE countdown</div>
+          <Switch
+            checked={data.settings.countdownEnabled}
+            onChange={setCountdownEnabled}
+            label="AYCE countdown aan- of uitzetten"
+          />
+        </div>
+        <p className="settings-hint">
+          Toont een voortgangsbalk op de homepage tussen twee data, met percentage en aantal dagen
+          te gaan.
+        </p>
+        {data.settings.countdownEnabled && (
+          <div className="countdown-dates">
+            <div className="countdown-date-field">
+              <label htmlFor="countdown-start">Startdatum</label>
+              <input
+                id="countdown-start"
+                type="date"
+                value={data.settings.countdownStart}
+                onChange={(e) => setCountdownRange(e.target.value, data.settings.countdownEnd)}
+              />
+            </div>
+            <div className="countdown-date-field">
+              <label htmlFor="countdown-end">Einddatum</label>
+              <input
+                id="countdown-end"
+                type="date"
+                value={data.settings.countdownEnd}
+                onChange={(e) => setCountdownRange(data.settings.countdownStart, e.target.value)}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="settings-card">

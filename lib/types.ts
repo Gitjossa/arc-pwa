@@ -52,6 +52,9 @@ export type Unit = "kg" | "lbs";
 export interface Settings {
   unit: Unit;
   onboarded: boolean;
+  countdownEnabled: boolean;
+  countdownStart: string; // yyyy-mm-dd
+  countdownEnd: string; // yyyy-mm-dd
 }
 
 export interface AppData {
