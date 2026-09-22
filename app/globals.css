@@ -35,7 +35,6 @@ body {
   background: var(--bg);
   background-image: radial-gradient(circle at 10% -5%, rgba(200, 255, 61, 0.1), transparent 40%),
     radial-gradient(circle at 100% 10%, rgba(255, 46, 136, 0.05), transparent 35%);
-  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -93,6 +92,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.tab-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .tab-item svg {
   width: 20px;
   height: 20px;
@@ -105,6 +110,35 @@ body {
 }
 
 .tab-item.active {
+  color: var(--accent-2);
+}
+
+.tab-item.primary {
+  gap: 5px;
+}
+
+.tab-item.primary .tab-item-icon {
+  width: 54px;
+  height: 54px;
+  margin-top: -26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 18px -4px rgba(200, 255, 61, 0.55);
+}
+
+.tab-item.primary .tab-item-icon svg {
+  width: 26px;
+  height: 26px;
+  color: var(--bg);
+  opacity: 1;
+}
+
+.tab-item.primary span:last-child {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.tab-item.primary.active span:last-child {
   color: var(--accent-2);
 }
 
