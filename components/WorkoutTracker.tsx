@@ -18,7 +18,7 @@ import {
   subscribe,
   toggleDone,
 } from "@/lib/store";
-import type { DayDef, WorkoutSession } from "@/lib/types";
+import type { DayDef, ExerciseDef, WorkoutSession } from "@/lib/types";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import FinishCelebration from "./FinishCelebration";
 import { KgInput, RepsInput } from "./SetInputs";
@@ -58,6 +58,29 @@ export default function WorkoutTracker() {
   const [shareSession, setShareSession] = useState<WorkoutSession | null>(null);
   const [sharePrNames, setSharePrNames] = useState<string[]>([]);
   const [shareStreakWeeks, setShareStreakWeeks] = useState(0);
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+
+  function expandExercise(exerciseId: string) {
+    setCollapsedIds((prev) => {
+      if (!prev.has(exerciseId)) return prev;
+      const next = new Set(prev);
+      next.delete(exerciseId);
+      return next;
+    });
+  }
+
+  function handleToggleDone(exercise: ExerciseDef, wasDone: boolean) {
+    toggleDone(day.id, exercise);
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (wasDone) {
+        next.delete(exercise.id);
+      } else {
+        next.add(exercise.id);
+      }
+      return next;
+    });
+  }
 
   if (days.length === 0) {
     return (
@@ -91,6 +114,7 @@ export default function WorkoutTracker() {
       // autoplay blocked or unsupported — the visual celebration still plays
     });
     setCelebrating(true);
+    setCollapsedIds(new Set());
     const session = finishWorkout(day);
     if (session) {
       const newPrNames = session.exercises
@@ -186,6 +210,7 @@ export default function WorkoutTracker() {
               const sessionBest = filledWeights.length ? Math.max(...filledWeights) : 0;
               const isNewPr = sessionBest > historicalBest;
               const isExtra = extraIds.has(exercise.id);
+              const isCollapsed = collapsedIds.has(exercise.id);
 
               return (
                 <SwipeToSkip
@@ -197,6 +222,56 @@ export default function WorkoutTracker() {
                       : hideSessionExercise(day.id, exercise.id)
                   }
                 >
+                  {isCollapsed ? (
+                    <div
+                      className="exercise exercise-collapsed done"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => expandExercise(exercise.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          expandExercise(exercise.id);
+                        }
+                      }}
+                    >
+                      <div className="ex-collapsed-row">
+                        <div
+                          className="check"
+                          role="checkbox"
+                          aria-checked={rec.done}
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleDone(exercise, rec.done);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleToggleDone(exercise, rec.done);
+                            }
+                          }}
+                        >
+                          <CheckIcon />
+                        </div>
+                        <div className="ex-collapsed-info">
+                          <span className="ex-collapsed-name">
+                            {exercise.name}
+                            {isNewPr && <span className="ex-pr-tag">PR</span>}
+                          </span>
+                          {lastFilled.length > 0 && (
+                            <span className="ex-collapsed-summary">
+                              {lastFilled.map((s) => `${s.reps}×${s.kg}${unit}`).join(", ")}
+                            </span>
+                          )}
+                        </div>
+                        <span className="ex-collapsed-chevron" aria-hidden="true">
+                          &#8964;
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
                   <div className={`exercise${rec.done ? " done" : ""}`}>
                     <div className="ex-head">
                       <div className="ex-name-block">
@@ -219,11 +294,11 @@ export default function WorkoutTracker() {
                         role="checkbox"
                         aria-checked={rec.done}
                         tabIndex={0}
-                        onClick={() => toggleDone(day.id, exercise)}
+                        onClick={() => handleToggleDone(exercise, rec.done)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            toggleDone(day.id, exercise);
+                            handleToggleDone(exercise, rec.done);
                           }
                         }}
                       >
@@ -279,6 +354,7 @@ export default function WorkoutTracker() {
                       </button>
                     </div>
                   </div>
+                  )}
                 </SwipeToSkip>
               );
             })}
