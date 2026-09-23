@@ -5,15 +5,20 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { personalRecords } from "@/lib/history";
 import {
+  addDraftSet,
+  addSessionExercise,
   commitSetField,
   finishWorkout,
   getRecord,
   getServerSnapshot,
   getSnapshot,
+  removeDraftSet,
+  removeSessionExercise,
   subscribe,
   toggleDone,
 } from "@/lib/store";
 import type { DayDef } from "@/lib/types";
+import FinishCelebration from "./FinishCelebration";
 import { KgInput, RepsInput } from "./SetInputs";
 
 function CheckIcon() {
@@ -44,6 +49,8 @@ export default function WorkoutTracker() {
     return idx >= 0 ? idx : 0;
   });
   const records = useMemo(() => personalRecords(data.history), [data.history]);
+  const [celebrating, setCelebrating] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState("");
 
   if (days.length === 0) {
     return (
@@ -61,13 +68,34 @@ export default function WorkoutTracker() {
   }
 
   const day = days[Math.min(activeDay, days.length - 1)];
-  const doneCount = day.exercises.filter((ex) => getRecord(data.draft, day.id, ex).done).length;
-  const total = day.exercises.length;
+  const extras = data.sessionExtras[day.id] ?? [];
+  const extraIds = new Set(extras.map((e) => e.id));
+  const allExercises = [...day.exercises, ...extras];
+  const doneCount = allExercises.filter((ex) => getRecord(data.draft, day.id, ex).done).length;
+  const total = allExercises.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
   const unit = data.settings.unit;
 
+  function handleFinish() {
+    const audio = new Audio("/sfx-letsgo.mp3");
+    audio.play().catch(() => {
+      // autoplay blocked or unsupported — the visual celebration still plays
+    });
+    setCelebrating(true);
+    finishWorkout(day);
+    setTimeout(() => setCelebrating(false), 1900);
+  }
+
+  function handleAddExercise() {
+    const name = newExerciseName.trim();
+    if (!name) return;
+    addSessionExercise(day.id, name);
+    setNewExerciseName("");
+  }
+
   return (
     <div className="wrap">
+      <FinishCelebration show={celebrating} />
       <div className="brand-row">
         <h1>Trainingslog</h1>
         <span className="active-day-tag">{dayLabel(day)}</span>
@@ -88,16 +116,19 @@ export default function WorkoutTracker() {
         ))}
       </div>
 
-      {total === 0 ? (
+      {total === 0 && (
         <p className="empty-state">
           Deze dag heeft nog geen oefeningen.
           <br />
-          <Link href="/schema">Oefeningen toevoegen &rarr;</Link>
+          <Link href="/schema">Voeg oefeningen toe aan je schema</Link>, of voeg er hieronder één toe
+          voor vandaag.
         </p>
-      ) : (
+      )}
+
+      {total > 0 && (
         <>
           <div className="segments">
-            {day.exercises.map((ex) => {
+            {allExercises.map((ex) => {
               const rec = getRecord(data.draft, day.id, ex);
               return <div key={ex.id} className={`segment${rec.done ? " filled" : ""}`} />;
             })}
@@ -110,10 +141,16 @@ export default function WorkoutTracker() {
           </div>
 
           <div>
-            {day.exercises.map((exercise) => {
+            {allExercises.map((exercise) => {
               const rec = getRecord(data.draft, day.id, exercise);
               const lastFilled = rec.sets.filter((s) => s.reps && s.kg);
-              const pr = records.get(exercise.id);
+              const historicalBest = records.get(exercise.libraryId)?.weight ?? 0;
+              const filledWeights = rec.sets
+                .map((s) => (s.kg ? Number(s.kg) : null))
+                .filter((w): w is number => w !== null);
+              const sessionBest = filledWeights.length ? Math.max(...filledWeights) : 0;
+              const isNewPr = sessionBest > historicalBest;
+              const isExtra = extraIds.has(exercise.id);
 
               return (
                 <div
@@ -122,7 +159,10 @@ export default function WorkoutTracker() {
                 >
                   <div className="ex-head">
                     <div className="ex-name-block">
-                      <div className="ex-name">{exercise.name}</div>
+                      <div className="ex-name">
+                        {exercise.name}
+                        {isNewPr && <span className="ex-pr-tag">PR</span>}
+                      </div>
                       <div className="ex-last">
                         {lastFilled.length ? (
                           <>
@@ -133,27 +173,40 @@ export default function WorkoutTracker() {
                         )}
                       </div>
                     </div>
-                    <div
-                      className="check"
-                      role="checkbox"
-                      aria-checked={rec.done}
-                      tabIndex={0}
-                      onClick={() => toggleDone(day.id, exercise)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          toggleDone(day.id, exercise);
-                        }
-                      }}
-                    >
-                      <CheckIcon />
+                    <div className="ex-head-actions">
+                      {isExtra && (
+                        <button
+                          type="button"
+                          className="session-exercise-remove"
+                          aria-label={`${exercise.name} verwijderen voor vandaag`}
+                          onClick={() => removeSessionExercise(day.id, exercise.id)}
+                        >
+                          &times;
+                        </button>
+                      )}
+                      <div
+                        className="check"
+                        role="checkbox"
+                        aria-checked={rec.done}
+                        tabIndex={0}
+                        onClick={() => toggleDone(day.id, exercise)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleDone(day.id, exercise);
+                          }
+                        }}
+                      >
+                        <CheckIcon />
+                      </div>
                     </div>
                   </div>
 
                   <div className="set-rows">
                     {rec.sets.map((setRec, setIdx) => {
                       const resetKey = `${day.id}-${exercise.id}-${setIdx}`;
-                      const isPr = Boolean(setRec.kg) && Number(setRec.kg) > (pr?.weight ?? 0);
+                      const weight = setRec.kg ? Number(setRec.kg) : null;
+                      const isPr = isNewPr && weight !== null && weight === sessionBest;
                       return (
                         <div className={`set-row${isPr ? " is-pr" : ""}`} key={setIdx}>
                           <div className="set-num">{setIdx + 1}.</div>
@@ -173,32 +226,73 @@ export default function WorkoutTracker() {
                               PR
                             </span>
                           )}
+                          {rec.sets.length > 1 && (
+                            <button
+                              type="button"
+                              className="set-remove"
+                              aria-label={`Set ${setIdx + 1} verwijderen`}
+                              onClick={() => removeDraftSet(day.id, exercise, setIdx)}
+                            >
+                              &times;
+                            </button>
+                          )}
                         </div>
                       );
                     })}
+                  </div>
+                  <div className="set-actions">
+                    <button
+                      type="button"
+                      className="add-set-btn"
+                      onClick={() => addDraftSet(day.id, exercise)}
+                    >
+                      + Set toevoegen
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <div className="actions">
-            <button
-              type="button"
-              className="finish-btn"
-              onClick={() => finishWorkout(day)}
-              disabled={doneCount === 0}
-            >
-              Workout afronden &amp; opslaan in historie
-            </button>
-          </div>
-
-          <p className="note">
-            Gewicht en reps worden lokaal op dit toestel onthouden als richtlijn voor je volgende
-            sessie.
-          </p>
         </>
       )}
+
+      <div className="add-row">
+        <input
+          value={newExerciseName}
+          onChange={(e) => setNewExerciseName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAddExercise();
+          }}
+          list="exercise-library-list"
+          placeholder="Oefening toevoegen voor vandaag..."
+        />
+        <button type="button" onClick={handleAddExercise}>
+          + Toevoegen
+        </button>
+      </div>
+      <datalist id="exercise-library-list">
+        {data.library.map((lib) => (
+          <option key={lib.id} value={lib.name} />
+        ))}
+      </datalist>
+
+      {total > 0 && (
+        <div className="actions">
+          <button
+            type="button"
+            className="finish-btn"
+            onClick={handleFinish}
+            disabled={doneCount === 0}
+          >
+            Workout afronden &amp; opslaan in historie
+          </button>
+        </div>
+      )}
+
+      <p className="note">
+        Gewicht en reps worden lokaal op dit toestel onthouden als richtlijn voor je volgende
+        sessie.
+      </p>
     </div>
   );
 }

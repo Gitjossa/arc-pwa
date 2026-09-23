@@ -4,8 +4,10 @@ import { useState, useSyncExternalStore } from "react";
 import {
   addDay,
   addExercise,
+  addLibraryExercise,
   deleteDay,
   deleteExercise,
+  deleteLibraryExercise,
   getServerSnapshot,
   getSnapshot,
   moveDay,
@@ -14,7 +16,9 @@ import {
   subscribe,
   updateExercise,
 } from "@/lib/store";
-import type { DayDef } from "@/lib/types";
+import type { DayDef, LibraryExercise } from "@/lib/types";
+
+const LIBRARY_DATALIST_ID = "exercise-library-list";
 
 function ExerciseRow({ dayId, exercise }: { dayId: string; exercise: DayDef["exercises"][number] }) {
   return (
@@ -130,9 +134,72 @@ function DayCard({ day, index, total }: { day: DayDef; index: number; total: num
           onKeyDown={(e) => {
             if (e.key === "Enter") submitExercise();
           }}
-          placeholder="Nieuwe oefening..."
+          list={LIBRARY_DATALIST_ID}
+          placeholder="Oefening uit bibliotheek of nieuw..."
         />
         <button type="button" onClick={submitExercise}>
+          + Toevoegen
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LibrarySection({ library }: { library: LibraryExercise[] }) {
+  const [search, setSearch] = useState("");
+  const [newName, setNewName] = useState("");
+
+  const filtered = library
+    .filter((l) => l.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  function submit() {
+    const name = newName.trim();
+    if (!name) return;
+    addLibraryExercise(name);
+    setNewName("");
+  }
+
+  return (
+    <div className="day-card">
+      <div className="day-card-head">
+        <div className="day-name-input library-title">Oefeningen-bibliotheek</div>
+      </div>
+      <p className="settings-hint library-hint">
+        Alle oefeningen die je kunt kiezen bij een trainingsdag, of tijdens je workout.
+      </p>
+      <input
+        className="library-search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Zoek in bibliotheek..."
+      />
+      <div className="library-list">
+        {filtered.length === 0 && <p className="empty-state small">Geen oefeningen gevonden.</p>}
+        {filtered.map((lib) => (
+          <div key={lib.id} className="library-item">
+            <span>{lib.name}</span>
+            <button
+              type="button"
+              className="danger"
+              onClick={() => deleteLibraryExercise(lib.id)}
+              aria-label={`${lib.name} verwijderen uit bibliotheek`}
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="add-row">
+        <input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submit();
+          }}
+          placeholder="Nieuwe oefening toevoegen..."
+        />
+        <button type="button" onClick={submit}>
           + Toevoegen
         </button>
       </div>
@@ -158,6 +225,8 @@ export default function SchemaEditor() {
       </div>
       <p className="subtitle">Stel je eigen trainingsdagen en oefeningen samen.</p>
 
+      <LibrarySection library={data.library} />
+
       {data.program.days.map((day, i) => (
         <DayCard key={day.id} day={day} index={i} total={data.program.days.length} />
       ))}
@@ -175,6 +244,12 @@ export default function SchemaEditor() {
           + Dag toevoegen
         </button>
       </div>
+
+      <datalist id={LIBRARY_DATALIST_ID}>
+        {data.library.map((lib) => (
+          <option key={lib.id} value={lib.name} />
+        ))}
+      </datalist>
     </div>
   );
 }

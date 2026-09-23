@@ -11,13 +11,38 @@ import {
   sessionVolume,
   thisWeekVolume,
 } from "@/lib/history";
-import { getServerSnapshot, getSnapshot, subscribe } from "@/lib/store";
+import { getServerSnapshot, getSnapshot, subscribe, updateHistorySet } from "@/lib/store";
 import HistoryCalendar from "./HistoryCalendar";
 import ProgressChart from "./ProgressChart";
 
 function formatDateLong(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+}
+
+function EditableStat({
+  value,
+  suffix,
+  onCommit,
+}: {
+  value: string;
+  suffix: string;
+  onCommit: (value: string) => void;
+}) {
+  const [text, setText] = useState(value);
+  return (
+    <div className="hist-edit-field">
+      <input
+        value={text}
+        inputMode="decimal"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => {
+          if (text && text !== value) onCommit(text);
+        }}
+      />
+      <span>{suffix}</span>
+    </div>
+  );
 }
 
 function pctChange(current: number, previous: number): string | null {
@@ -33,6 +58,7 @@ export default function HistoryView() {
   const exerciseOptions = useMemo(() => listLoggedExercises(history), [history]);
   const [selected, setSelected] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
 
   const activeExerciseId = selected || exerciseOptions[0]?.id || "";
   const series = activeExerciseId ? exerciseSeries(history, activeExerciseId) : [];
@@ -114,27 +140,61 @@ export default function HistoryView() {
 
       <h2 className="section-title">Sessies</h2>
       <div className="session-list">
-        {visibleSessions.map((session) => (
-          <div key={session.id} className="session-card">
-            <div className="session-head">
-              <span className="session-day">{session.dayName}</span>
-              <span className="session-date">{formatDateLong(session.date)}</span>
-            </div>
-            <div className="session-exercises">
-              {session.exercises.map((ex) => (
-                <div key={ex.exerciseId} className="session-exercise">
-                  <span className="session-exercise-name">{ex.name}</span>
-                  <span className="session-exercise-sets">
-                    {ex.sets.map((s) => `${s.reps}×${s.kg}${settings.unit}`).join(", ")}
-                  </span>
+        {visibleSessions.map((session) => {
+          const isEditing = editingSessionId === session.id;
+          return (
+            <div key={session.id} className="session-card">
+              <div className="session-head">
+                <span className="session-day">{session.dayName}</span>
+                <div className="session-head-right">
+                  <span className="session-date">{formatDateLong(session.date)}</span>
+                  <button
+                    type="button"
+                    className="session-edit-btn"
+                    onClick={() => setEditingSessionId(isEditing ? null : session.id)}
+                  >
+                    {isEditing ? "Klaar" : "Bewerken"}
+                  </button>
                 </div>
-              ))}
+              </div>
+              <div className="session-exercises">
+                {session.exercises.map((ex) =>
+                  isEditing ? (
+                    <div key={ex.exerciseId} className="session-exercise-edit">
+                      <span className="session-exercise-name">{ex.name}</span>
+                      <div className="hist-edit-rows">
+                        {ex.sets.map((s, setIdx) => (
+                          <div className="hist-edit-row" key={setIdx}>
+                            <EditableStat
+                              value={s.reps}
+                              suffix="reps"
+                              onCommit={(v) => updateHistorySet(session.id, ex.exerciseId, setIdx, "reps", v)}
+                            />
+                            <EditableStat
+                              value={s.kg}
+                              suffix={settings.unit}
+                              onCommit={(v) => updateHistorySet(session.id, ex.exerciseId, setIdx, "kg", v)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={ex.exerciseId} className="session-exercise">
+                      <span className="session-exercise-name">{ex.name}</span>
+                      <span className="session-exercise-sets">
+                        {ex.sets.map((s) => `${s.reps}×${s.kg}${settings.unit}`).join(", ")}
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+              <div className="session-volume">
+                Volume: {Math.round(sessionVolume(session)).toLocaleString("nl-NL")} {settings.unit}
+              </div>
             </div>
-            <div className="session-volume">
-              Volume: {Math.round(sessionVolume(session)).toLocaleString("nl-NL")} {settings.unit}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

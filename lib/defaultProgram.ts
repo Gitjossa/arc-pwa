@@ -1,7 +1,8 @@
+import { libraryIdForName } from "./exerciseLibrary";
 import type { DayDef, ExerciseDef, Program } from "./types";
 
 function ex(dayId: string, idx: number, name: string): ExerciseDef {
-  return { id: `${dayId}-ex${idx}`, name, sets: 3, targetReps: "12" };
+  return { id: `${dayId}-ex${idx}`, libraryId: libraryIdForName(name), name, sets: 3, targetReps: "12" };
 }
 
 function day(id: string, name: string, exercises: string[]): DayDef {
