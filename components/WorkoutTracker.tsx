@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { personalRecords } from "@/lib/history";
+import { currentStreakWeeks, personalRecords } from "@/lib/history";
 import {
   addDraftSet,
   addSessionExercise,
@@ -57,6 +57,7 @@ export default function WorkoutTracker() {
   const [newExerciseName, setNewExerciseName] = useState("");
   const [shareSession, setShareSession] = useState<WorkoutSession | null>(null);
   const [sharePrNames, setSharePrNames] = useState<string[]>([]);
+  const [shareStreakWeeks, setShareStreakWeeks] = useState(0);
 
   if (days.length === 0) {
     return (
@@ -99,9 +100,11 @@ export default function WorkoutTracker() {
           return sessionBest > (records.get(ex.exerciseId)?.weight ?? 0);
         })
         .map((ex) => ex.name);
+      const streakWeeks = currentStreakWeeks([session, ...data.history]);
       setTimeout(() => {
         setShareSession(session);
         setSharePrNames(newPrNames);
+        setShareStreakWeeks(streakWeeks);
       }, 1900);
     }
     setTimeout(() => setCelebrating(false), 1900);
@@ -122,6 +125,7 @@ export default function WorkoutTracker() {
           session={shareSession}
           unit={unit}
           newPrNames={sharePrNames}
+          streakWeeks={shareStreakWeeks}
           onClose={() => setShareSession(null)}
         />
       )}

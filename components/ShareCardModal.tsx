@@ -22,11 +22,13 @@ export default function ShareCardModal({
   session,
   unit,
   newPrNames,
+  streakWeeks,
   onClose,
 }: {
   session: WorkoutSession;
   unit: Unit;
   newPrNames: string[];
+  streakWeeks: number;
   onClose: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,13 +45,14 @@ export default function ShareCardModal({
       exercises: session.exercises,
       unit,
       newPrNames,
+      streakWeeks,
     }).then(() => {
       if (!cancelled) setReady(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [session, unit, newPrNames]);
+  }, [session, unit, newPrNames, streakWeeks]);
 
   function getBlob(): Promise<Blob | null> {
     const canvas = canvasRef.current;

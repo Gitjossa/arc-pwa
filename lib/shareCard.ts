@@ -6,6 +6,7 @@ export interface ShareCardData {
   exercises: LoggedExercise[];
   unit: Unit;
   newPrNames: string[];
+  streakWeeks: number;
 }
 
 let fontsPromise: Promise<void> | null = null;
@@ -52,15 +53,6 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function truncateToWidth(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
-  if (ctx.measureText(text).width <= maxWidth) return text;
-  let truncated = text;
-  while (truncated.length > 1 && ctx.measureText(`${truncated}…`).width > maxWidth) {
-    truncated = truncated.slice(0, -1);
-  }
-  return `${truncated}…`;
-}
-
 const MONTHS_NL = [
   "januari",
   "februari",
@@ -94,13 +86,36 @@ function sessionVolume(exercises: LoggedExercise[]): number {
   );
 }
 
+function totalReps(exercises: LoggedExercise[]): number {
+  return exercises.reduce(
+    (sum, ex) =>
+      sum +
+      ex.sets.reduce((setSum, set) => {
+        const reps = parseFloat(set.reps);
+        return setSum + (Number.isNaN(reps) ? 0 : reps);
+      }, 0),
+    0,
+  );
+}
+
+function topWeight(exercises: LoggedExercise[]): number {
+  let max = 0;
+  for (const ex of exercises) {
+    for (const set of ex.sets) {
+      const kg = parseFloat(set.kg);
+      if (!Number.isNaN(kg) && kg > max) max = kg;
+    }
+  }
+  return max;
+}
+
 const W = 1080;
 const PAD = 72;
-const EX_ROW_H = 118;
-const EX_GAP = 16;
+const TILE_H = 160;
+const TILE_GAP = 24;
+const ROW_GAP = 24;
 
-function computeHeight(exerciseCount: number): number {
-  const exercisesBlock = exerciseCount * EX_ROW_H + Math.max(0, exerciseCount - 1) * EX_GAP;
+function computeHeight(): number {
   return (
     PAD + // top padding
     64 +
@@ -113,12 +128,9 @@ function computeHeight(exerciseCount: number): number {
     8 + // hero number
     38 +
     56 + // hero unit
-    160 +
-    48 + // stats row
-    30 +
-    24 + // section title
-    exercisesBlock +
-    64 + // section -> footer gap
+    TILE_H * 2 +
+    ROW_GAP + // stats grid (2 rows)
+    56 + // grid -> footer gap
     40 + // footer text
     PAD // bottom padding
   );
@@ -130,7 +142,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   if (!ctx) return;
 
   const contentW = W - PAD * 2;
-  const height = computeHeight(data.exercises.length);
+  const height = computeHeight();
   canvas.width = W;
   canvas.height = height;
 
@@ -186,8 +198,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   y += 30 + 12;
 
   // hero number
-  const totalVolume = sessionVolume(data.exercises);
-  const volumeLabel = Math.round(totalVolume).toLocaleString("nl-NL");
+  const volumeLabel = Math.round(sessionVolume(data.exercises)).toLocaleString("nl-NL");
   ctx.font = '700 176px "Space Grotesk"';
   const heroGrad = ctx.createLinearGradient(PAD, 0, PAD + Math.max(300, ctx.measureText(volumeLabel).width), 0);
   heroGrad.addColorStop(0, "#c8ff3d");
@@ -201,71 +212,37 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   ctx.fillText(`${data.unit.toUpperCase()} GETILD`, PAD, y + 28);
   y += 38 + 56;
 
-  // stats tiles
+  // stats grid: 2 rows x 3 columns
   const totalSets = data.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
-  const tileGap = 24;
-  const tileW = (contentW - tileGap * 2) / 3;
-  const tileH = 160;
   const tiles = [
     { value: String(data.exercises.length), label: "OEFENINGEN", accent: "#c8ff3d" },
     { value: String(totalSets), label: "SETS", accent: "#c8ff3d" },
-    { value: String(data.newPrNames.length), label: "PR'S", accent: data.newPrNames.length > 0 ? "#ff2e88" : "#c8ff3d" },
+    { value: String(Math.round(totalReps(data.exercises))), label: "REPS", accent: "#c8ff3d" },
+    { value: String(Math.round(topWeight(data.exercises))), label: `TOPGEWICHT (${data.unit.toUpperCase()})`, accent: "#c8ff3d" },
+    {
+      value: String(data.newPrNames.length),
+      label: "PR'S",
+      accent: data.newPrNames.length > 0 ? "#ff2e88" : "#c8ff3d",
+    },
+    { value: String(data.streakWeeks), label: "WEKEN OP RIJ", accent: "#c8ff3d" },
   ];
+  const tileW = (contentW - TILE_GAP * 2) / 3;
   tiles.forEach((tile, i) => {
-    const x = PAD + i * (tileW + tileGap);
-    roundRect(ctx, x, y, tileW, tileH, 24);
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const x = PAD + col * (tileW + TILE_GAP);
+    const tileY = y + row * (TILE_H + ROW_GAP);
+    roundRect(ctx, x, tileY, tileW, TILE_H, 24);
     ctx.fillStyle = "#161a1e";
     ctx.fill();
     ctx.fillStyle = tile.accent;
     ctx.font = '700 64px "Space Grotesk"';
-    ctx.fillText(tile.value, x + 28, y + 92);
+    ctx.fillText(tile.value, x + 28, tileY + 92);
     ctx.fillStyle = "#5c6660";
     ctx.font = '700 20px "Inter"';
-    ctx.fillText(tile.label, x + 28, y + 130);
+    ctx.fillText(tile.label, x + 28, tileY + 130);
   });
-  y += tileH + 48;
-
-  // section title
-  ctx.fillStyle = "#5c6660";
-  ctx.font = '700 24px "Inter"';
-  ctx.fillText("OEFENINGEN", PAD, y + 24);
-  y += 30 + 24;
-
-  // exercise rows
-  data.exercises.forEach((ex) => {
-    roundRect(ctx, PAD, y, contentW, EX_ROW_H, 20);
-    ctx.fillStyle = "#161a1e";
-    ctx.fill();
-
-    ctx.fillStyle = "#f2f5ee";
-    ctx.font = '600 34px "Space Grotesk"';
-    const nameMaxWidth = contentW - 56 - (data.newPrNames.includes(ex.name) ? 90 : 0);
-    const name = truncateToWidth(ctx, ex.name, nameMaxWidth);
-    ctx.fillText(name, PAD + 28, y + 46);
-
-    if (data.newPrNames.includes(ex.name)) {
-      const nameWidth = ctx.measureText(name).width;
-      const badgeX = PAD + 28 + nameWidth + 16;
-      roundRect(ctx, badgeX, y + 16, 64, 34, 8);
-      ctx.fillStyle = "#ff2e88";
-      ctx.fill();
-      ctx.fillStyle = "#1a0510";
-      ctx.font = '700 18px "Inter"';
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("PR", badgeX + 32, y + 16 + 17);
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
-    }
-
-    ctx.fillStyle = "#9aa39a";
-    ctx.font = '500 26px "Inter"';
-    const setsLabel = ex.sets.map((s) => `${s.reps}×${s.kg}${data.unit}`).join(", ");
-    ctx.fillText(truncateToWidth(ctx, setsLabel, contentW - 56), PAD + 28, y + 86);
-
-    y += EX_ROW_H + EX_GAP;
-  });
-  y += 64 - EX_GAP;
+  y += TILE_H * 2 + ROW_GAP + 56;
 
   // footer
   ctx.fillStyle = "#5c6660";
