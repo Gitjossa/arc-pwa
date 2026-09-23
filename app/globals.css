@@ -273,12 +273,43 @@ h1 {
   font-weight: 600;
 }
 
+.swipe-wrap {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.swipe-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 84px;
+  display: flex;
+}
+
+.swipe-action-btn {
+  flex: 1;
+  border: none;
+  background: #ff6b6b;
+  color: #2a0a0a;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.swipe-content {
+  position: relative;
+  touch-action: pan-y;
+}
+
 .exercise {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 13px 14px 14px;
-  margin-bottom: 10px;
   position: relative;
   overflow: hidden;
   transition: border-color 0.15s ease;
@@ -309,13 +340,6 @@ h1 {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 11px;
-}
-
-.ex-head-actions {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .ex-name-block {
@@ -435,18 +459,6 @@ h1 {
   font-weight: 700;
   color: var(--pop);
   vertical-align: middle;
-}
-
-.session-exercise-remove {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  font-size: 17px;
-  cursor: pointer;
 }
 
 .pr-badge {

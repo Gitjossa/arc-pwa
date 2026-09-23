@@ -22,6 +22,7 @@ import type { DayDef } from "@/lib/types";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import FinishCelebration from "./FinishCelebration";
 import { KgInput, RepsInput } from "./SetInputs";
+import SwipeToSkip from "./SwipeToSkip";
 
 function CheckIcon() {
   return (
@@ -159,39 +160,32 @@ export default function WorkoutTracker() {
               const isExtra = extraIds.has(exercise.id);
 
               return (
-                <div
+                <SwipeToSkip
                   key={`${day.id}-${exercise.id}`}
-                  className={`exercise${rec.done ? " done" : ""}`}
+                  label="Overslaan"
+                  onSkip={() =>
+                    isExtra
+                      ? removeSessionExercise(day.id, exercise.id)
+                      : hideSessionExercise(day.id, exercise.id)
+                  }
                 >
-                  <div className="ex-head">
-                    <div className="ex-name-block">
-                      <div className="ex-name">
-                        {exercise.name}
-                        {isNewPr && <span className="ex-pr-tag">PR</span>}
+                  <div className={`exercise${rec.done ? " done" : ""}`}>
+                    <div className="ex-head">
+                      <div className="ex-name-block">
+                        <div className="ex-name">
+                          {exercise.name}
+                          {isNewPr && <span className="ex-pr-tag">PR</span>}
+                        </div>
+                        <div className="ex-last">
+                          {lastFilled.length ? (
+                            <>
+                              vorige keer: <b>{lastFilled.map((s) => `${s.reps}×${s.kg}${unit}`).join(", ")}</b>
+                            </>
+                          ) : (
+                            " "
+                          )}
+                        </div>
                       </div>
-                      <div className="ex-last">
-                        {lastFilled.length ? (
-                          <>
-                            vorige keer: <b>{lastFilled.map((s) => `${s.reps}×${s.kg}${unit}`).join(", ")}</b>
-                          </>
-                        ) : (
-                          " "
-                        )}
-                      </div>
-                    </div>
-                    <div className="ex-head-actions">
-                      <button
-                        type="button"
-                        className="session-exercise-remove"
-                        aria-label={`${exercise.name} overslaan voor vandaag`}
-                        onClick={() =>
-                          isExtra
-                            ? removeSessionExercise(day.id, exercise.id)
-                            : hideSessionExercise(day.id, exercise.id)
-                        }
-                      >
-                        &times;
-                      </button>
                       <div
                         className="check"
                         role="checkbox"
@@ -208,56 +202,56 @@ export default function WorkoutTracker() {
                         <CheckIcon />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="set-rows">
-                    {rec.sets.map((setRec, setIdx) => {
-                      const resetKey = `${day.id}-${exercise.id}-${setIdx}`;
-                      const weight = setRec.kg ? Number(setRec.kg) : null;
-                      const isPr = isNewPr && weight !== null && weight === sessionBest;
-                      return (
-                        <div className={`set-row${isPr ? " is-pr" : ""}`} key={setIdx}>
-                          <div className="set-num">{setIdx + 1}.</div>
-                          <RepsInput
-                            resetKey={resetKey}
-                            value={setRec.reps}
-                            onCommit={(v) => commitSetField(day.id, exercise, setIdx, "reps", v)}
-                          />
-                          <KgInput
-                            resetKey={resetKey}
-                            unit={unit}
-                            placeholder={setRec.kg || unit}
-                            onCommit={(v) => commitSetField(day.id, exercise, setIdx, "kg", v)}
-                          />
-                          {isPr && (
-                            <span className="pr-badge" title="Nieuw persoonlijk record">
-                              PR
-                            </span>
-                          )}
-                          {rec.sets.length > 1 && (
-                            <button
-                              type="button"
-                              className="set-remove"
-                              aria-label={`Set ${setIdx + 1} verwijderen`}
-                              onClick={() => removeDraftSet(day.id, exercise, setIdx)}
-                            >
-                              &times;
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                    <div className="set-rows">
+                      {rec.sets.map((setRec, setIdx) => {
+                        const resetKey = `${day.id}-${exercise.id}-${setIdx}`;
+                        const weight = setRec.kg ? Number(setRec.kg) : null;
+                        const isPr = isNewPr && weight !== null && weight === sessionBest;
+                        return (
+                          <div className={`set-row${isPr ? " is-pr" : ""}`} key={setIdx}>
+                            <div className="set-num">{setIdx + 1}.</div>
+                            <RepsInput
+                              resetKey={resetKey}
+                              value={setRec.reps}
+                              onCommit={(v) => commitSetField(day.id, exercise, setIdx, "reps", v)}
+                            />
+                            <KgInput
+                              resetKey={resetKey}
+                              unit={unit}
+                              placeholder={setRec.kg || unit}
+                              onCommit={(v) => commitSetField(day.id, exercise, setIdx, "kg", v)}
+                            />
+                            {isPr && (
+                              <span className="pr-badge" title="Nieuw persoonlijk record">
+                                PR
+                              </span>
+                            )}
+                            {rec.sets.length > 1 && (
+                              <button
+                                type="button"
+                                className="set-remove"
+                                aria-label={`Set ${setIdx + 1} verwijderen`}
+                                onClick={() => removeDraftSet(day.id, exercise, setIdx)}
+                              >
+                                &times;
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="set-actions">
+                      <button
+                        type="button"
+                        className="add-set-btn"
+                        onClick={() => addDraftSet(day.id, exercise)}
+                      >
+                        + Set toevoegen
+                      </button>
+                    </div>
                   </div>
-                  <div className="set-actions">
-                    <button
-                      type="button"
-                      className="add-set-btn"
-                      onClick={() => addDraftSet(day.id, exercise)}
-                    >
-                      + Set toevoegen
-                    </button>
-                  </div>
-                </div>
+                </SwipeToSkip>
               );
             })}
           </div>
