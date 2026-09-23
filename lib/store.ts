@@ -20,6 +20,7 @@ const DEFAULT_DATA: AppData = {
   program: { days: [] },
   draft: {},
   sessionExtras: {},
+  sessionHidden: {},
   history: [],
   library: DEFAULT_LIBRARY,
   settings: {
@@ -114,6 +115,7 @@ function readFromStorage(): AppData {
       program: parsed.program ?? DEFAULT_DATA.program,
       draft: parsed.draft ?? {},
       sessionExtras: parsed.sessionExtras ?? {},
+      sessionHidden: parsed.sessionHidden ?? {},
       history: parsed.history ?? [],
       library: parsed.library ?? [],
       // Data already existed on disk, so this device has used the app before —
@@ -336,12 +338,37 @@ export function removeSessionExercise(dayId: string, exerciseId: string): void {
   });
 }
 
+/** Skips a schema exercise for today's session only — the saved schema is untouched. */
+export function hideSessionExercise(dayId: string, exerciseId: string): void {
+  pushUndo("Oefening overgeslagen voor vandaag");
+  update((prev) => {
+    const existing = prev.sessionHidden[dayId] ?? [];
+    if (existing.includes(exerciseId)) return prev;
+    return {
+      ...prev,
+      sessionHidden: { ...prev.sessionHidden, [dayId]: [...existing, exerciseId] },
+    };
+  });
+}
+
+export function unhideSessionExercise(dayId: string, exerciseId: string): void {
+  update((prev) => {
+    const existing = prev.sessionHidden[dayId] ?? [];
+    return {
+      ...prev,
+      sessionHidden: { ...prev.sessionHidden, [dayId]: existing.filter((id) => id !== exerciseId) },
+    };
+  });
+}
+
 /** Archives the filled-in sets for this day (schema + ad-hoc additions) into history, then resets the draft. */
 export function finishWorkout(day: DayDef): void {
   pushUndo("Workout opgeslagen");
   update((prev) => {
     const extras = prev.sessionExtras[day.id] ?? [];
-    const allExercises = [...day.exercises, ...extras];
+    const hiddenIds = new Set(prev.sessionHidden[day.id] ?? []);
+    const visibleSchemaExercises = day.exercises.filter((exercise) => !hiddenIds.has(exercise.id));
+    const allExercises = [...visibleSchemaExercises, ...extras];
 
     const loggedExercises = allExercises
       .map((exercise) => {
@@ -376,7 +403,16 @@ export function finishWorkout(day: DayDef): void {
     const nextSessionExtras = { ...prev.sessionExtras };
     delete nextSessionExtras[day.id];
 
-    return { ...prev, draft: nextDraft, history: nextHistory, sessionExtras: nextSessionExtras };
+    const nextSessionHidden = { ...prev.sessionHidden };
+    delete nextSessionHidden[day.id];
+
+    return {
+      ...prev,
+      draft: nextDraft,
+      history: nextHistory,
+      sessionExtras: nextSessionExtras,
+      sessionHidden: nextSessionHidden,
+    };
   });
 }
 
@@ -588,6 +624,7 @@ export function importData(json: string): { ok: true } | { ok: false; error: str
       program: data.program ?? DEFAULT_DATA.program,
       draft: data.draft ?? {},
       sessionExtras: data.sessionExtras ?? {},
+      sessionHidden: data.sessionHidden ?? {},
       history: data.history ?? [],
       library: data.library ?? [],
       settings: { ...DEFAULT_DATA.settings, ...data.settings },

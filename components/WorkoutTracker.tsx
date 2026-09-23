@@ -12,12 +12,14 @@ import {
   getRecord,
   getServerSnapshot,
   getSnapshot,
+  hideSessionExercise,
   removeDraftSet,
   removeSessionExercise,
   subscribe,
   toggleDone,
 } from "@/lib/store";
 import type { DayDef } from "@/lib/types";
+import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import FinishCelebration from "./FinishCelebration";
 import { KgInput, RepsInput } from "./SetInputs";
 
@@ -70,7 +72,9 @@ export default function WorkoutTracker() {
   const day = days[Math.min(activeDay, days.length - 1)];
   const extras = data.sessionExtras[day.id] ?? [];
   const extraIds = new Set(extras.map((e) => e.id));
-  const allExercises = [...day.exercises, ...extras];
+  const hiddenIds = new Set(data.sessionHidden[day.id] ?? []);
+  const visibleSchemaExercises = day.exercises.filter((ex) => !hiddenIds.has(ex.id));
+  const allExercises = [...visibleSchemaExercises, ...extras];
   const doneCount = allExercises.filter((ex) => getRecord(data.draft, day.id, ex).done).length;
   const total = allExercises.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
@@ -118,7 +122,9 @@ export default function WorkoutTracker() {
 
       {total === 0 && (
         <p className="empty-state">
-          Deze dag heeft nog geen oefeningen.
+          {day.exercises.length > 0
+            ? "Je hebt alle oefeningen van vandaag overgeslagen."
+            : "Deze dag heeft nog geen oefeningen."}
           <br />
           <Link href="/schema">Voeg oefeningen toe aan je schema</Link>, of voeg er hieronder één toe
           voor vandaag.
@@ -174,16 +180,18 @@ export default function WorkoutTracker() {
                       </div>
                     </div>
                     <div className="ex-head-actions">
-                      {isExtra && (
-                        <button
-                          type="button"
-                          className="session-exercise-remove"
-                          aria-label={`${exercise.name} verwijderen voor vandaag`}
-                          onClick={() => removeSessionExercise(day.id, exercise.id)}
-                        >
-                          &times;
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="session-exercise-remove"
+                        aria-label={`${exercise.name} overslaan voor vandaag`}
+                        onClick={() =>
+                          isExtra
+                            ? removeSessionExercise(day.id, exercise.id)
+                            : hideSessionExercise(day.id, exercise.id)
+                        }
+                      >
+                        &times;
+                      </button>
                       <div
                         className="check"
                         role="checkbox"
@@ -256,25 +264,13 @@ export default function WorkoutTracker() {
         </>
       )}
 
-      <div className="add-row">
-        <input
-          value={newExerciseName}
-          onChange={(e) => setNewExerciseName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleAddExercise();
-          }}
-          list="exercise-library-list"
-          placeholder="Oefening toevoegen voor vandaag..."
-        />
-        <button type="button" onClick={handleAddExercise}>
-          + Toevoegen
-        </button>
-      </div>
-      <datalist id="exercise-library-list">
-        {data.library.map((lib) => (
-          <option key={lib.id} value={lib.name} />
-        ))}
-      </datalist>
+      <ExerciseAutocomplete
+        library={data.library}
+        value={newExerciseName}
+        onChange={setNewExerciseName}
+        onSubmit={handleAddExercise}
+        placeholder="Oefening toevoegen voor vandaag..."
+      />
 
       {total > 0 && (
         <div className="actions">

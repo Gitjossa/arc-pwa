@@ -17,8 +17,7 @@ import {
   updateExercise,
 } from "@/lib/store";
 import type { DayDef, LibraryExercise } from "@/lib/types";
-
-const LIBRARY_DATALIST_ID = "exercise-library-list";
+import ExerciseAutocomplete from "./ExerciseAutocomplete";
 
 function ExerciseRow({ dayId, exercise }: { dayId: string; exercise: DayDef["exercises"][number] }) {
   return (
@@ -75,7 +74,17 @@ function ExerciseRow({ dayId, exercise }: { dayId: string; exercise: DayDef["exe
   );
 }
 
-function DayCard({ day, index, total }: { day: DayDef; index: number; total: number }) {
+function DayCard({
+  day,
+  index,
+  total,
+  library,
+}: {
+  day: DayDef;
+  index: number;
+  total: number;
+  library: LibraryExercise[];
+}) {
   const [newExercise, setNewExercise] = useState("");
 
   function submitExercise() {
@@ -127,20 +136,13 @@ function DayCard({ day, index, total }: { day: DayDef; index: number; total: num
         </div>
       )}
 
-      <div className="add-row">
-        <input
-          value={newExercise}
-          onChange={(e) => setNewExercise(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") submitExercise();
-          }}
-          list={LIBRARY_DATALIST_ID}
-          placeholder="Oefening uit bibliotheek of nieuw..."
-        />
-        <button type="button" onClick={submitExercise}>
-          + Toevoegen
-        </button>
-      </div>
+      <ExerciseAutocomplete
+        library={library}
+        value={newExercise}
+        onChange={setNewExercise}
+        onSubmit={submitExercise}
+        placeholder="Oefening uit bibliotheek of nieuw..."
+      />
     </div>
   );
 }
@@ -228,7 +230,7 @@ export default function SchemaEditor() {
       <LibrarySection library={data.library} />
 
       {data.program.days.map((day, i) => (
-        <DayCard key={day.id} day={day} index={i} total={data.program.days.length} />
+        <DayCard key={day.id} day={day} index={i} total={data.program.days.length} library={data.library} />
       ))}
 
       <div className="add-row add-day-row">
@@ -244,12 +246,6 @@ export default function SchemaEditor() {
           + Dag toevoegen
         </button>
       </div>
-
-      <datalist id={LIBRARY_DATALIST_ID}>
-        {data.library.map((lib) => (
-          <option key={lib.id} value={lib.name} />
-        ))}
-      </datalist>
     </div>
   );
 }

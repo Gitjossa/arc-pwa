@@ -40,6 +40,9 @@ export type DraftState = Record<string, ExerciseRecord>;
 /** Exercises added ad-hoc during a session, keyed by dayId. Cleared once that day's workout is finished. */
 export type SessionExtras = Record<string, ExerciseDef[]>;
 
+/** Schema exercise ids skipped for today only, keyed by dayId. Cleared once that day's workout is finished. */
+export type SessionHidden = Record<string, string[]>;
+
 export interface LoggedSet {
   reps: string;
   kg: string;
@@ -74,6 +77,7 @@ export interface AppData {
   program: Program;
   draft: DraftState;
   sessionExtras: SessionExtras;
+  sessionHidden: SessionHidden;
   history: WorkoutSession[];
   library: LibraryExercise[];
   settings: Settings;
