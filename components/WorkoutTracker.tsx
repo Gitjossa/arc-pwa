@@ -18,10 +18,11 @@ import {
   subscribe,
   toggleDone,
 } from "@/lib/store";
-import type { DayDef } from "@/lib/types";
+import type { DayDef, WorkoutSession } from "@/lib/types";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import FinishCelebration from "./FinishCelebration";
 import { KgInput, RepsInput } from "./SetInputs";
+import ShareCardModal from "./ShareCardModal";
 import SwipeToSkip from "./SwipeToSkip";
 
 function CheckIcon() {
@@ -54,6 +55,8 @@ export default function WorkoutTracker() {
   const records = useMemo(() => personalRecords(data.history), [data.history]);
   const [celebrating, setCelebrating] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
+  const [shareSession, setShareSession] = useState<WorkoutSession | null>(null);
+  const [sharePrNames, setSharePrNames] = useState<string[]>([]);
 
   if (days.length === 0) {
     return (
@@ -87,7 +90,20 @@ export default function WorkoutTracker() {
       // autoplay blocked or unsupported — the visual celebration still plays
     });
     setCelebrating(true);
-    finishWorkout(day);
+    const session = finishWorkout(day);
+    if (session) {
+      const newPrNames = session.exercises
+        .filter((ex) => {
+          const weights = ex.sets.map((s) => Number(s.kg)).filter((w) => !Number.isNaN(w));
+          const sessionBest = weights.length ? Math.max(...weights) : 0;
+          return sessionBest > (records.get(ex.exerciseId)?.weight ?? 0);
+        })
+        .map((ex) => ex.name);
+      setTimeout(() => {
+        setShareSession(session);
+        setSharePrNames(newPrNames);
+      }, 1900);
+    }
     setTimeout(() => setCelebrating(false), 1900);
   }
 
@@ -101,6 +117,14 @@ export default function WorkoutTracker() {
   return (
     <div className="wrap">
       <FinishCelebration show={celebrating} />
+      {shareSession && (
+        <ShareCardModal
+          session={shareSession}
+          unit={unit}
+          newPrNames={sharePrNames}
+          onClose={() => setShareSession(null)}
+        />
+      )}
       <div className="brand-row">
         <h1>Trainingslog</h1>
         <span className="active-day-tag">{dayLabel(day)}</span>

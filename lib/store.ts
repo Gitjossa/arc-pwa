@@ -362,8 +362,9 @@ export function unhideSessionExercise(dayId: string, exerciseId: string): void {
 }
 
 /** Archives the filled-in sets for this day (schema + ad-hoc additions) into history, then resets the draft. */
-export function finishWorkout(day: DayDef): void {
+export function finishWorkout(day: DayDef): WorkoutSession | null {
   pushUndo("Workout opgeslagen");
+  let createdSession: WorkoutSession | null = null;
   update((prev) => {
     const extras = prev.sessionExtras[day.id] ?? [];
     const hiddenIds = new Set(prev.sessionHidden[day.id] ?? []);
@@ -388,6 +389,7 @@ export function finishWorkout(day: DayDef): void {
         exercises: loggedExercises,
       };
       nextHistory = [session, ...prev.history];
+      createdSession = session;
     }
 
     const nextDraft = { ...prev.draft };
@@ -414,6 +416,7 @@ export function finishWorkout(day: DayDef): void {
       sessionHidden: nextSessionHidden,
     };
   });
+  return createdSession;
 }
 
 // ---- Program editing ----

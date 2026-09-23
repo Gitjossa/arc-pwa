@@ -1813,3 +1813,117 @@ h1 {
   animation: punch 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Share workout card */
+
+@keyframes share-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.share-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(3, 4, 5, 0.86);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.share-modal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-elev);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: share-modal-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.share-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.share-preview {
+  position: relative;
+  max-height: 62vh;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: #07080a;
+  display: flex;
+}
+
+.share-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 14px;
+}
+
+.share-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.share-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.share-save-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.share-save-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.share-save-btn:disabled,
+.share-actions .finish-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
