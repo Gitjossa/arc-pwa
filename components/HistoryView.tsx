@@ -6,14 +6,17 @@ import {
   currentStreakWeeks,
   exerciseSeries,
   listLoggedExercises,
+  type PersonalRecord,
   personalRecords,
   sessionDates,
   sessionVolume,
   thisWeekVolume,
 } from "@/lib/history";
 import { getServerSnapshot, getSnapshot, subscribe, updateHistorySet } from "@/lib/store";
+import type { WorkoutSession } from "@/lib/types";
 import HistoryCalendar from "./HistoryCalendar";
 import ProgressChart from "./ProgressChart";
+import ShareCardModal from "./ShareCardModal";
 
 function formatDateLong(iso: string): string {
   const d = new Date(iso + "T00:00:00");
@@ -52,6 +55,18 @@ function pctChange(current: number, previous: number): string | null {
   return `${sign}${pct}% t.o.v. vorige week`;
 }
 
+/** Exercises where this session holds the all-time PR (ties go to the most recently logged session). */
+function prNamesForSession(session: WorkoutSession, records: Map<string, PersonalRecord>): string[] {
+  return session.exercises
+    .filter((ex) => {
+      const weights = ex.sets.map((s) => Number(s.kg)).filter((w) => !Number.isNaN(w));
+      const sessionBest = weights.length ? Math.max(...weights) : 0;
+      const record = records.get(ex.exerciseId);
+      return record !== undefined && record.weight === sessionBest && record.date === session.date;
+    })
+    .map((ex) => ex.name);
+}
+
 export default function HistoryView() {
   const data = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { history, settings } = data;
@@ -59,6 +74,7 @@ export default function HistoryView() {
   const [selected, setSelected] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [shareSession, setShareSession] = useState<WorkoutSession | null>(null);
 
   const activeExerciseId = selected || exerciseOptions[0]?.id || "";
   const series = activeExerciseId ? exerciseSeries(history, activeExerciseId) : [];
@@ -151,6 +167,14 @@ export default function HistoryView() {
                   <button
                     type="button"
                     className="session-edit-btn"
+                    onClick={() => setShareSession(session)}
+                    aria-label="Bekijk en deel overzicht"
+                  >
+                    Delen
+                  </button>
+                  <button
+                    type="button"
+                    className="session-edit-btn"
                     onClick={() => setEditingSessionId(isEditing ? null : session.id)}
                   >
                     {isEditing ? "Klaar" : "Bewerken"}
@@ -196,6 +220,16 @@ export default function HistoryView() {
           );
         })}
       </div>
+
+      {shareSession && (
+        <ShareCardModal
+          session={shareSession}
+          unit={settings.unit}
+          newPrNames={prNamesForSession(shareSession, records)}
+          streakWeeks={currentStreakWeeks(history, shareSession.date)}
+          onClose={() => setShareSession(null)}
+        />
+      )}
     </div>
   );
 }

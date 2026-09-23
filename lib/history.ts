@@ -99,11 +99,11 @@ export function thisWeekVolume(history: WorkoutSession[]): { current: number; pr
 
 // ---- Streak ----
 
-/** Consecutive weeks (allowing the current week to still be empty) with at least one session. */
-export function currentStreakWeeks(history: WorkoutSession[]): number {
+/** Consecutive weeks (allowing the reference week to still be empty) with at least one session. */
+export function currentStreakWeeks(history: WorkoutSession[], asOfDate: string = todayIso()): number {
   if (history.length === 0) return 0;
   const buckets = new Set(history.map((s) => weekBucket(s.date)));
-  const todayBucket = weekBucket(todayIso());
+  const todayBucket = weekBucket(asOfDate);
   let cursor = buckets.has(todayBucket) ? todayBucket : todayBucket - 1;
   if (!buckets.has(cursor)) return 0;
   let streak = 0;
