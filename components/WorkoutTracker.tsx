@@ -18,7 +18,7 @@ import {
   subscribe,
   toggleDone,
 } from "@/lib/store";
-import type { DayDef, ExerciseDef, WorkoutSession } from "@/lib/types";
+import type { DayDef, ExerciseDef, ExerciseRecord, WorkoutSession } from "@/lib/types";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import FinishCelebration from "./FinishCelebration";
 import { KgInput, RepsInput } from "./SetInputs";
@@ -80,6 +80,27 @@ export default function WorkoutTracker() {
       }
       return next;
     });
+  }
+
+  function handleCommitSetField(
+    exercise: ExerciseDef,
+    rec: ExerciseRecord,
+    setIdx: number,
+    field: "reps" | "kg",
+    value: string,
+  ) {
+    commitSetField(day.id, exercise, setIdx, field, value);
+    // Mirrors the store's own auto-check condition, only to trigger the collapse
+    // exactly when the exercise transitions from not-done to done via filling sets.
+    const nextSets = rec.sets.map((s, i) => (i === setIdx ? { ...s, [field]: value } : s));
+    const allFilled = nextSets.every((s) => s.reps && s.kg);
+    if (allFilled && !rec.done) {
+      setCollapsedIds((prev) => {
+        const next = new Set(prev);
+        next.add(exercise.id);
+        return next;
+      });
+    }
   }
 
   if (days.length === 0) {
@@ -317,13 +338,13 @@ export default function WorkoutTracker() {
                             <RepsInput
                               resetKey={resetKey}
                               value={setRec.reps}
-                              onCommit={(v) => commitSetField(day.id, exercise, setIdx, "reps", v)}
+                              onCommit={(v) => handleCommitSetField(exercise, rec, setIdx, "reps", v)}
                             />
                             <KgInput
                               resetKey={resetKey}
                               unit={unit}
                               placeholder={setRec.kg || unit}
-                              onCommit={(v) => commitSetField(day.id, exercise, setIdx, "kg", v)}
+                              onCommit={(v) => handleCommitSetField(exercise, rec, setIdx, "kg", v)}
                             />
                             {isPr && (
                               <span className="pr-badge" title="Nieuw persoonlijk record">
