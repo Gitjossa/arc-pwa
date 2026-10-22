@@ -9,11 +9,10 @@ import {
   importData,
   resetAllData,
   setCountdownEnabled,
+  markBackupDone,
   setCountdownRange,
-  setUnit,
   subscribe,
 } from "@/lib/store";
-import type { Unit } from "@/lib/types";
 import Switch from "./Switch";
 
 export default function SettingsView() {
@@ -31,6 +30,7 @@ export default function SettingsView() {
     a.download = `arc-data-${date}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    markBackupDone();
   }
 
   function handleImportClick() {
@@ -65,24 +65,7 @@ export default function SettingsView() {
       <div className="brand-row">
         <h1>Instellingen</h1>
       </div>
-      <p className="subtitle">Eenheden en je data beheren.</p>
-
-      <div className="settings-card">
-        <div className="settings-label">Eenheid</div>
-        <div className="unit-toggle">
-          {(["kg", "lbs"] as Unit[]).map((u) => (
-            <button
-              key={u}
-              type="button"
-              className={`unit-btn${data.settings.unit === u ? " active" : ""}`}
-              onClick={() => setUnit(u)}
-            >
-              {u}
-            </button>
-          ))}
-        </div>
-        <p className="settings-hint">Verandert alleen het label, geen automatische omrekening.</p>
-      </div>
+      <p className="subtitle">Je countdown en je data beheren.</p>
 
       <div className="settings-card">
         <div className="settings-row">
@@ -126,6 +109,11 @@ export default function SettingsView() {
         <p className="settings-hint">
           Je data staat alleen lokaal op dit toestel. Exporteer regelmatig een back-up, of gebruik
           het om je data over te zetten naar een ander toestel.
+        </p>
+        <p className="settings-hint">
+          {data.settings.lastBackupAt
+            ? `Laatste back-up: ${data.settings.lastBackupAt}. Je krijgt elke maand een herinnering.`
+            : "Je hebt nog geen back-up gemaakt. Je krijgt elke maand een herinnering."}
         </p>
         <div className="settings-actions">
           <button type="button" className="settings-btn" onClick={handleExport}>

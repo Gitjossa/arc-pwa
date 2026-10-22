@@ -72,6 +72,10 @@ export interface Settings {
   countdownEnabled: boolean;
   countdownStart: string; // yyyy-mm-dd
   countdownEnd: string; // yyyy-mm-dd
+  /** yyyy-mm-dd of the last data export, used for the monthly backup reminder. */
+  lastBackupAt?: string;
+  /** yyyy-mm-dd until which the backup reminder is hidden. */
+  backupSnoozedUntil?: string;
 }
 
 /** The workout the user explicitly started. While set, the tracker is locked to this day. */
@@ -80,6 +84,8 @@ export interface ActiveWorkout {
   startedAt: string; // ISO timestamp
   /** Exercise ids shown collapsed (finished) — kept here so it survives navigating away. */
   collapsed: string[];
+  /** Custom exercise order for this session (exercise ids). */
+  order?: string[];
 }
 
 export interface AppData {

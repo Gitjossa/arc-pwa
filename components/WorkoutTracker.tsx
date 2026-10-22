@@ -22,6 +22,8 @@ import {
   getSnapshot,
   getSuggestion,
   hideSessionExercise,
+  moveSessionExercise,
+  orderExercises,
   removeDraftSet,
   removeSessionExercise,
   setExerciseCollapsed,
@@ -121,7 +123,9 @@ export default function WorkoutTracker() {
   const extraIds = new Set(extras.map((e) => e.id));
   const hiddenIds = new Set(data.sessionHidden[day.id] ?? []);
   const visibleSchemaExercises = day.exercises.filter((ex) => !hiddenIds.has(ex.id));
-  const allExercises = isActive ? [...visibleSchemaExercises, ...extras] : day.exercises;
+  const allExercises = isActive
+    ? orderExercises([...visibleSchemaExercises, ...extras], active?.order)
+    : day.exercises;
   const doneCount = allExercises.filter((ex) => getRecord(data, day.id, ex).done).length;
   const total = allExercises.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
@@ -338,6 +342,22 @@ export default function WorkoutTracker() {
                               " "
                             )}
                           </div>
+                        </div>
+                        <div className="ex-move">
+                          <button
+                            type="button"
+                            aria-label="Oefening omhoog"
+                            onClick={() => moveSessionExercise(day.id, exercise.id, -1)}
+                          >
+                            &#8963;
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Oefening omlaag"
+                            onClick={() => moveSessionExercise(day.id, exercise.id, 1)}
+                          >
+                            &#8964;
+                          </button>
                         </div>
                         <div
                           className="check"

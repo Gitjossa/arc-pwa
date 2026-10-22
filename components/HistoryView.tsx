@@ -13,13 +13,17 @@ import {
   thisWeekVolume,
 } from "@/lib/history";
 import {
+  addHistoryExercise,
+  addHistorySet,
   deleteHistorySession,
   getServerSnapshot,
   getSnapshot,
   subscribe,
+  tidyHistorySession,
   updateHistorySet,
 } from "@/lib/store";
 import type { WorkoutSession } from "@/lib/types";
+import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import HistoryCalendar from "./HistoryCalendar";
 import ProgressChart from "./ProgressChart";
 import ShareCardModal from "./ShareCardModal";
@@ -69,6 +73,7 @@ export default function HistoryView() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [shareSession, setShareSession] = useState<WorkoutSession | null>(null);
+  const [newHistoryExercise, setNewHistoryExercise] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   function toggleExpanded(sessionId: string) {
@@ -207,6 +212,13 @@ export default function HistoryView() {
                               </div>
                             ))}
                           </div>
+                          <button
+                            type="button"
+                            className="add-set-btn"
+                            onClick={() => addHistorySet(session.id, ex.exerciseId)}
+                          >
+                            + Set toevoegen
+                          </button>
                         </div>
                       ) : (
                         <div key={ex.exerciseId} className="session-exercise">
@@ -218,6 +230,20 @@ export default function HistoryView() {
                       ),
                     )}
                   </div>
+                  {isEditing && (
+                    <ExerciseAutocomplete
+                      library={data.library}
+                      value={newHistoryExercise}
+                      onChange={setNewHistoryExercise}
+                      onSubmit={() => {
+                        const name = newHistoryExercise.trim();
+                        if (!name) return;
+                        addHistoryExercise(session.id, name);
+                        setNewHistoryExercise("");
+                      }}
+                      placeholder="Oefening aan deze sessie toevoegen..."
+                    />
+                  )}
                   <div className="session-actions">
                     <button
                       type="button"
@@ -230,7 +256,10 @@ export default function HistoryView() {
                     <button
                       type="button"
                       className="session-edit-btn"
-                      onClick={() => setEditingSessionId(isEditing ? null : session.id)}
+                      onClick={() => {
+                        if (isEditing) tidyHistorySession(session.id);
+                        setEditingSessionId(isEditing ? null : session.id);
+                      }}
                     >
                       {isEditing ? "Klaar" : "Bewerken"}
                     </button>

@@ -362,6 +362,35 @@ function clearDaySession(prev: AppData, dayId: string): AppData {
   };
 }
 
+/** Applies a session-specific order; exercises missing from it keep their original relative order at the end. */
+export function orderExercises(list: ExerciseDef[], order?: string[]): ExerciseDef[] {
+  if (!order || order.length === 0) return list;
+  const rank = (id: string) => {
+    const i = order.indexOf(id);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  return list.map((e, i) => ({ e, i })).sort((a, b) => rank(a.e.id) - rank(b.e.id) || a.i - b.i).map((x) => x.e);
+}
+
+export function moveSessionExercise(dayId: string, exerciseId: string, direction: -1 | 1): void {
+  update((prev) => {
+    const active = prev.activeWorkout;
+    const day = prev.program.days.find((d) => d.id === dayId);
+    if (!active || active.dayId !== dayId || !day) return prev;
+    const hidden = new Set(prev.sessionHidden[dayId] ?? []);
+    const list = orderExercises(
+      [...day.exercises.filter((e) => !hidden.has(e.id)), ...(prev.sessionExtras[dayId] ?? [])],
+      active.order,
+    );
+    const idx = list.findIndex((e) => e.id === exerciseId);
+    const target = idx + direction;
+    if (idx === -1 || target < 0 || target >= list.length) return prev;
+    const ids = list.map((e) => e.id);
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    return { ...prev, activeWorkout: { ...active, order: ids } };
+  });
+}
+
 export function startWorkout(dayId: string): void {
   update((prev) => {
     const current = prev.activeWorkout;
@@ -393,6 +422,7 @@ export function toggleDone(dayId: string, exercise: ExerciseDef): void {
   update((prev) => {
     if (!prev.activeWorkout) return prev;
     const rec = getRecord(prev, dayId, exercise);
+    if (!rec.done) pushUndo("Oefening afgerond");
     return {
       ...prev,
       draft: { ...prev.draft, [exerciseKey(dayId, exercise.id)]: { ...rec, done: !rec.done } },
@@ -416,6 +446,7 @@ export function commitSetField(
     // user typed count — never suggestions. Never auto-uncheck: a manual uncheck stays respected.
     const allFilled = sets.every((s) => s.reps && s.kg);
     const becomesDone = allFilled && !rec.done;
+    if (becomesDone) pushUndo("Oefening afgerond");
     return {
       ...prev,
       draft: {
@@ -717,6 +748,68 @@ export function updateHistorySet(
           },
     ),
   }));
+}
+
+export function addHistorySet(sessionId: string, exerciseId: string): void {
+  update((prev) => ({
+    ...prev,
+    history: prev.history.map((s) =>
+      s.id !== sessionId
+        ? s
+        : {
+            ...s,
+            exercises: s.exercises.map((ex) =>
+              ex.exerciseId === exerciseId ? { ...ex, sets: [...ex.sets, { reps: "", kg: "" }] } : ex,
+            ),
+          },
+    ),
+  }));
+}
+
+export function addHistoryExercise(sessionId: string, name: string): void {
+  update((prev) => {
+    const { library, id } = findOrCreateLibraryEntry(prev.library, name);
+    return {
+      ...prev,
+      library,
+      history: prev.history.map((s) =>
+        s.id !== sessionId || s.exercises.some((e) => e.exerciseId === id)
+          ? s
+          : { ...s, exercises: [...s.exercises, { exerciseId: id, name: name.trim(), sets: [{ reps: "", kg: "" }] }] },
+      ),
+    };
+  });
+}
+
+/** Drops sets left completely empty after editing, and exercises without any set. */
+export function tidyHistorySession(sessionId: string): void {
+  update((prev) => ({
+    ...prev,
+    history: prev.history.map((s) =>
+      s.id !== sessionId
+        ? s
+        : {
+            ...s,
+            exercises: s.exercises
+              .map((ex) => ({ ...ex, sets: ex.sets.filter((set) => set.reps !== "" || set.kg !== "") }))
+              .filter((ex) => ex.sets.length > 0),
+          },
+    ),
+  }));
+}
+
+// ---- Backup reminder ----
+
+export function markBackupDone(): void {
+  update((prev) => ({ ...prev, settings: { ...prev.settings, lastBackupAt: todayIso(), backupSnoozedUntil: undefined } }));
+}
+
+export function snoozeBackupReminder(days = 7): void {
+  const until = new Date();
+  until.setDate(until.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const iso = `${until.getFullYear()}-${pad(until.getMonth() + 1)}-${pad(until.getDate())}`;
+  update((prev) => ({ ...prev, settings: { ...prev.settings, backupSnoozedUntil: iso } }));
 }
 
 // ---- Settings ----

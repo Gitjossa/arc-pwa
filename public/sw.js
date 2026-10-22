@@ -1,5 +1,5 @@
-const CACHE_NAME = "arc-cache-v3";
-const APP_SHELL = ["/", "/vandaag", "/schema", "/historie", "/instellingen", "/manifest.json"];
+const CACHE_NAME = "arc-cache-v4";
+const APP_SHELL = ["/", "/vandaag", "/schema", "/oefeningen", "/historie", "/instellingen", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

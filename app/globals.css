@@ -11,7 +11,7 @@
   --done: #c8ff3d;
   --text: #ffffff;
   --text-dim: #a3a8a1;
-  --text-faint: #8b9089;
+  --text-faint: #9aa099;
   --radius: 20px;
 }
 
@@ -67,7 +67,7 @@ body {
   max-width: 480px;
   width: 100%;
   margin: 0 auto;
-  padding: 20px 16px 8px;
+  padding: 20px 16px 32px;
 }
 
 .tab-bar {
@@ -104,7 +104,7 @@ body {
 }
 
 .tab-item span {
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -161,7 +161,7 @@ h1 {
 
 .active-day-tag {
   font-family: var(--font-space-grotesk), sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--bg);
@@ -230,7 +230,7 @@ h1 {
 }
 
 .plate-day {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-dim);
   text-align: center;
@@ -262,7 +262,7 @@ h1 {
 .progress-caption {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   margin: -12px 0 16px;
   font-variant-numeric: tabular-nums;
@@ -364,7 +364,7 @@ h1 {
 }
 
 .ex-collapsed-summary {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -403,7 +403,7 @@ h1 {
 }
 
 .ex-last {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   margin-top: 3px;
   min-height: 14px;
@@ -490,7 +490,7 @@ h1 {
   background: none;
   border: none;
   color: var(--accent-2);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 4px 0;
   cursor: pointer;
@@ -499,14 +499,14 @@ h1 {
 .ex-pr-tag {
   display: inline-block;
   margin-left: 6px;
-  font-size: 8.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--pop);
   vertical-align: middle;
 }
 
 .pr-badge {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   line-height: 1;
@@ -518,7 +518,7 @@ h1 {
 }
 
 .set-num {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
@@ -547,7 +547,7 @@ h1 {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-faint);
   pointer-events: none;
 }
@@ -715,7 +715,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text-faint);
   font-weight: 600;
 }
@@ -943,7 +943,7 @@ h1 {
 }
 
 .chart-label {
-  font-size: 9px;
+  font-size: 12px;
   fill: var(--text-faint);
   font-family: var(--font-inter), sans-serif;
 }
@@ -984,7 +984,7 @@ h1 {
 }
 
 .session-date {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   text-transform: capitalize;
 }
@@ -1037,7 +1037,7 @@ h1 {
 }
 
 .settings-hint {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-faint);
   line-height: 1.6;
   margin: 6px 0 0;
@@ -1187,7 +1187,7 @@ h1 {
 
 .countdown-date-field label {
   display: block;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-faint);
   margin-bottom: 6px;
@@ -1258,7 +1258,7 @@ h1 {
 }
 
 .countdown-caption {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-faint);
   font-weight: 600;
 }
@@ -1288,7 +1288,7 @@ h1 {
 }
 
 .stat-label {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text-faint);
   font-weight: 600;
   margin-top: 3px;
@@ -1340,7 +1340,7 @@ h1 {
 
 .calendar-weekdays span {
   text-align: center;
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-faint);
 }
@@ -1424,7 +1424,7 @@ h1 {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--card-border);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   font-weight: 600;
 }
@@ -1439,7 +1439,7 @@ h1 {
   background: none;
   border: 1px solid var(--card-border);
   color: var(--accent-2);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 4px 9px;
   border-radius: 8px;
@@ -1499,7 +1499,7 @@ h1 {
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 9.5px;
+  font-size: 12px;
   color: var(--text-faint);
   pointer-events: none;
 }
@@ -1663,7 +1663,7 @@ h1 {
 }
 
 .note {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   text-align: center;
   margin-top: 18px;
@@ -2027,7 +2027,7 @@ h1 {
 
 .exercise-preview-meta {
   margin-top: 3px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-faint);
 }
 
@@ -2129,7 +2129,7 @@ h1 {
 }
 
 .session-summary {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   font-weight: 500;
 }
@@ -2221,7 +2221,7 @@ h1 {
 }
 
 .day-toggle-count {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   font-weight: 500;
 }
@@ -2335,7 +2335,7 @@ h1 {
 
 .section-title {
   font-family: var(--font-inter), sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   margin-top: 18px;
 }
@@ -2444,4 +2444,276 @@ h1 {
 
 .calendar-cell.has-session.selected {
   box-shadow: 0 0 0 2px var(--text);
+}
+
+
+/* ---- UX round: home hero, week strip, backup + update banners, chart, reorder ---- */
+
+.tab-item span {
+  font-size: 11px;
+}
+
+.ex-pr-tag,
+.pr-badge {
+  font-size: 11px;
+}
+
+.stat-tile {
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-value {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.next-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--bg);
+  text-decoration: none;
+}
+
+.next-card.running {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.next-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.next-name {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+}
+
+.next-meta {
+  font-size: 12px;
+  margin-top: 2px;
+  opacity: 0.75;
+}
+
+.next-play {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  padding-left: 3px;
+}
+
+.week-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.week-title {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.week-strip {
+  display: flex;
+  justify-content: space-between;
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 36px;
+}
+
+.week-label {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.week-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.week-num.trained {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.week-num.today {
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.backup-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 198, 51, 0.12);
+  border: 1px solid var(--pop);
+}
+
+.backup-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.backup-text span {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.backup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.backup-actions a,
+.backup-actions button {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 7px 12px;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.backup-actions .backup-primary {
+  background: var(--pop);
+  border-color: var(--pop);
+  color: #2b1d00;
+}
+
+.update-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  max-width: 448px;
+  margin: 0 auto;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 12px 11px 16px;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.update-banner button {
+  border: none;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.chart-label {
+  font-size: 10px;
+  fill: var(--text-faint);
+}
+
+.chart-readout {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.chart-pr {
+  color: var(--pop);
+  font-weight: 700;
+}
+
+.chart-hint {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.chart-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+.ex-move {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.ex-move button {
+  width: 26px;
+  height: 14px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.exercise-collapsed {
+  animation: collapse-in 0.28s ease;
+}
+
+@keyframes collapse-in {
+  from {
+    opacity: 0.4;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
