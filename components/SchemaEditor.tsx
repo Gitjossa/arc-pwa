@@ -16,6 +16,7 @@ import {
 } from "@/lib/store";
 import type { DayDef, LibraryExercise } from "@/lib/types";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
+import SwipeToSkip from "./SwipeToSkip";
 
 const ROW_GAP = 8;
 
@@ -220,16 +221,6 @@ function DayCard({
             >
               &darr;
             </button>
-            <button
-              type="button"
-              className="danger"
-              onClick={() => {
-                if (confirm(`"${day.name}" verwijderen inclusief oefeningen?`)) deleteDay(day.id);
-              }}
-              aria-label="Dag verwijderen"
-            >
-              &times;
-            </button>
           </div>
         )}
         <button
@@ -294,10 +285,17 @@ export default function SchemaEditor() {
       <div className="brand-row">
         <h1>Schema</h1>
       </div>
-      <p className="subtitle">Je trainingsdagen en de oefeningen daarin. Sleep om de volgorde aan te passen.</p>
+      <p className="subtitle">Je trainingsdagen en de oefeningen daarin. Sleep om de volgorde aan te passen, veeg een schema naar links om het te verwijderen.</p>
 
       {data.program.days.map((day, i) => (
-        <DayCard key={day.id} day={day} index={i} total={data.program.days.length} library={data.library} />
+        <SwipeToSkip
+          key={day.id}
+          label="Verwijderen"
+          className="overflow-visible day-swipe"
+          onSkip={() => deleteDay(day.id)}
+        >
+          <DayCard day={day} index={i} total={data.program.days.length} library={data.library} />
+        </SwipeToSkip>
       ))}
 
       <div className="add-row add-day-row">

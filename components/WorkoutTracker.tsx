@@ -59,9 +59,10 @@ export default function WorkoutTracker() {
   const days = data.program.days;
   const searchParams = useSearchParams();
   const requestedDayId = searchParams.get("day");
-  const [activeDay, setActiveDay] = useState(() => {
+  // No workout is preselected: the user picks one first (unless a link already named a day).
+  const [activeDay, setActiveDay] = useState<number | null>(() => {
     const idx = days.findIndex((d) => d.id === requestedDayId);
-    return idx >= 0 ? idx : 0;
+    return idx >= 0 ? idx : null;
   });
   const records = useMemo(() => personalRecords(data.history), [data.history]);
   const [celebrating, setCelebrating] = useState(false);
@@ -89,7 +90,30 @@ export default function WorkoutTracker() {
   const active = data.activeWorkout ?? null;
   const activeIdx = active ? days.findIndex((d) => d.id === active.dayId) : -1;
   const isActive = active !== null && activeIdx >= 0;
-  const dayIdx = isActive ? activeIdx : Math.min(activeDay, days.length - 1);
+  const dayIdx = isActive ? activeIdx : activeDay !== null ? Math.min(activeDay, days.length - 1) : -1;
+
+  if (dayIdx === -1) {
+    return (
+      <div className="wrap">
+        <div className="brand-row">
+          <h1>Start</h1>
+        </div>
+        <p className="subtitle">Kies eerst de workout die je vandaag gaat doen.</p>
+        <div className="plate-row">
+          {days.map((d, i) => (
+            <button key={d.id} type="button" className="plate" onClick={() => setActiveDay(i)}>
+              <div className="plate-ring">{dayLabel(d)}</div>
+              <div className="plate-day">{d.name}</div>
+            </button>
+          ))}
+        </div>
+        <button type="button" className="begin-workout-btn begin-top" disabled>
+          Start workout
+        </button>
+      </div>
+    );
+  }
+
   const day = days[dayIdx];
   const collapsedIds = new Set(isActive && active ? active.collapsed : []);
 
@@ -192,7 +216,7 @@ export default function WorkoutTracker() {
       {!isActive && total > 0 && (
         <>
           <button type="button" className="begin-workout-btn begin-top" onClick={() => startWorkout(day.id)}>
-            &#9654; Start workout
+            Start workout
           </button>
           <div className="preview-list">
             {day.exercises.map((exercise) => {

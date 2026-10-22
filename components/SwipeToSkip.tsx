@@ -10,15 +10,18 @@ export default function SwipeToSkip({
   children,
   onSkip,
   label,
+  className,
 }: {
   children: React.ReactNode;
   onSkip: () => void;
   label: string;
+  className?: string;
 }) {
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const openRef = useRef(false);
   const startRef = useRef<DragStart | null>(null);
+  const swipedRef = useRef(false);
 
   function handlePointerDown(e: React.PointerEvent) {
     startRef.current = { x: e.clientX, y: e.clientY, locked: null, baseX: dragX };
@@ -51,6 +54,14 @@ export default function SwipeToSkip({
     setDragging(false);
     if (!start) return;
 
+    if (start.locked === "h") {
+      // The click that follows a swipe must not activate whatever was under the finger.
+      swipedRef.current = true;
+      setTimeout(() => {
+        swipedRef.current = false;
+      }, 50);
+    }
+
     if (start.locked !== "h") {
       // A tap (no real movement) while the action was revealed closes it again.
       if (openRef.current) {
@@ -70,8 +81,8 @@ export default function SwipeToSkip({
   }
 
   return (
-    <div className="swipe-wrap">
-      <div className="swipe-action" style={{ width: REVEAL_WIDTH }}>
+    <div className={`swipe-wrap${className ? ` ${className}` : ""}`}>
+      <div className="swipe-action" style={{ width: REVEAL_WIDTH, opacity: dragX < 0 ? 1 : 0 }}>
         <button
           type="button"
           className="swipe-action-btn"
@@ -94,6 +105,12 @@ export default function SwipeToSkip({
         onPointerMove={handlePointerMove}
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
+        onClickCapture={(e) => {
+          if (swipedRef.current) {
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        }}
       >
         {children}
       </div>

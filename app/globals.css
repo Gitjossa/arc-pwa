@@ -72,6 +72,8 @@ body {
 }
 
 .tab-bar {
+  position: relative;
+  z-index: 20;
   flex-shrink: 0;
   display: flex;
   background: #131416;
@@ -290,6 +292,7 @@ h1 {
 
 .swipe-action-btn {
   flex: 1;
+  border-radius: 0 var(--radius) var(--radius) 0;
   border: none;
   background: #ff6b6b;
   color: #2a0a0a;
@@ -742,6 +745,27 @@ h1 {
 .add-row {
   display: flex;
   gap: 8px;
+  margin-bottom: 14px;
+}
+
+.day-card .autocomplete {
+  margin-top: 12px;
+}
+
+.swipe-wrap.overflow-visible {
+  overflow: visible;
+}
+
+.swipe-wrap.day-swipe {
+  margin-bottom: 14px;
+}
+
+.swipe-wrap.day-swipe .day-card {
+  margin-bottom: 0;
+}
+
+.swipe-action {
+  transition: opacity 0.2s ease;
 }
 
 .add-row input {
@@ -2027,7 +2051,14 @@ h1 {
   margin: 16px 0 4px;
 }
 
-.begin-workout-btn:active {
+.begin-workout-btn:disabled {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.begin-workout-btn:active:not(:disabled) {
   filter: brightness(0.95);
   transform: scale(0.98);
 }
