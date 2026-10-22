@@ -147,18 +147,18 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   canvas.height = height;
 
   // background
-  ctx.fillStyle = "#07080a";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, W, height);
 
   let glow = ctx.createRadialGradient(W * 0.08, height * -0.02, 0, W * 0.08, height * -0.02, W * 0.55);
-  glow.addColorStop(0, "rgba(200,255,61,0.14)");
+  glow.addColorStop(0, "rgba(200,255,61,0.07)");
   glow.addColorStop(1, "rgba(200,255,61,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, height);
 
   glow = ctx.createRadialGradient(W, height * 0.06, 0, W, height * 0.06, W * 0.45);
-  glow.addColorStop(0, "rgba(255,46,136,0.09)");
-  glow.addColorStop(1, "rgba(255,46,136,0)");
+  glow.addColorStop(0, "rgba(255,198,51,0)");
+  glow.addColorStop(1, "rgba(255,198,51,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, height);
 
@@ -203,7 +203,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   y += 34 + 56;
 
   // hero label
-  ctx.fillStyle = "#5c6660";
+  ctx.fillStyle = "#8b9089";
   ctx.font = '700 24px "Inter"';
   ctx.fillText("TOTAAL VOLUME", PAD, y + 24);
   y += 30 + 12;
@@ -213,7 +213,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   ctx.font = '700 176px "Space Grotesk"';
   const heroGrad = ctx.createLinearGradient(PAD, 0, PAD + Math.max(300, ctx.measureText(volumeLabel).width), 0);
   heroGrad.addColorStop(0, "#c8ff3d");
-  heroGrad.addColorStop(1, "#e9ff8a");
+  heroGrad.addColorStop(1, "#c8ff3d");
   ctx.fillStyle = heroGrad;
   ctx.fillText(volumeLabel, PAD, y + 150);
   y += 176 + 8;
@@ -233,7 +233,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
     {
       value: String(data.newPrNames.length),
       label: "PR'S",
-      accent: data.newPrNames.length > 0 ? "#ff2e88" : "#c8ff3d",
+      accent: data.newPrNames.length > 0 ? "#ffc633" : "#c8ff3d",
     },
     { value: String(data.streakWeeks), label: "WEKEN OP RIJ", accent: "#c8ff3d" },
   ];
@@ -244,19 +244,19 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
     const x = PAD + col * (tileW + TILE_GAP);
     const tileY = y + row * (TILE_H + ROW_GAP);
     roundRect(ctx, x, tileY, tileW, TILE_H, 24);
-    ctx.fillStyle = "#161a1e";
+    ctx.fillStyle = "#1a1b1a";
     ctx.fill();
     ctx.fillStyle = tile.accent;
     ctx.font = '700 64px "Space Grotesk"';
     ctx.fillText(tile.value, x + 28, tileY + 92);
-    ctx.fillStyle = "#5c6660";
+    ctx.fillStyle = "#8b9089";
     ctx.font = '700 20px "Inter"';
     ctx.fillText(tile.label, x + 28, tileY + 130);
   });
   y += TILE_H * 2 + ROW_GAP + 56;
 
   // footer
-  ctx.fillStyle = "#5c6660";
+  ctx.fillStyle = "#8b9089";
   ctx.font = '600 24px "Inter"';
   ctx.textAlign = "center";
   ctx.fillText("Gemaakt met Arc", W / 2, y + 24);
