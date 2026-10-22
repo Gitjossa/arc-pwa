@@ -118,7 +118,7 @@ const ROW_GAP = 24;
 function computeHeight(): number {
   return (
     PAD + // top padding
-    64 +
+    72 +
     36 + // logo row
     34 +
     56 + // day/date line
@@ -164,18 +164,29 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
 
   let y = PAD;
 
-  // logo mark: a small lime "arch" matching the app icon's motif
-  const markSize = 64;
+  // The real app icon (same geometry as scripts/logo-source.svg), drawn on its dark tile.
+  const markSize = 72;
   ctx.save();
-  ctx.strokeStyle = "#c8ff3d";
-  ctx.lineWidth = 12;
+  ctx.translate(PAD, y);
+  roundRect(ctx, 0, 0, markSize, markSize, markSize * 0.22);
+  ctx.clip();
+  ctx.fillStyle = "#1c1c1c";
+  ctx.fillRect(0, 0, markSize, markSize);
+  ctx.scale(markSize / 527, markSize / 527);
+  ctx.strokeStyle = "#d4ff5a";
+  ctx.fillStyle = "#d4ff5a";
+  ctx.lineWidth = 55.0015;
   ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(PAD + 8, y + markSize);
-  ctx.lineTo(PAD + 8, y + markSize * 0.42);
-  ctx.arc(PAD + markSize / 2, y + markSize * 0.42, markSize / 2 - 8, Math.PI, 0);
-  ctx.lineTo(PAD + markSize - 8, y + markSize);
-  ctx.stroke();
+  ctx.stroke(
+    new Path2D(
+      "M179.776 362.949C179.776 268.006 157.514 164.551 260.969 164.551C364.423 164.551 348.054 266.696 348.054 362.949",
+    ),
+  );
+  ctx.fill(
+    new Path2D(
+      "M246.513 311.876C261.701 311.876 274.013 299.563 274.013 284.375C274.013 269.187 261.701 256.874 246.513 256.874V284.375V311.876ZM179.725 284.375V311.876H246.513V284.375V256.874H179.725V284.375Z",
+    ),
+  );
   ctx.restore();
 
   ctx.fillStyle = "#f2f5ee";

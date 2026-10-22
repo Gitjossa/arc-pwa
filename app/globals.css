@@ -1970,3 +1970,161 @@ h1 {
   cursor: not-allowed;
 }
 
+
+/* Start / cancel workout, previews, running banner */
+
+.ex-input::placeholder {
+  color: #7d877f;
+  font-weight: 500;
+}
+
+.plate:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 14px;
+}
+
+.exercise-preview {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 11px 14px;
+}
+
+.exercise-preview-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.exercise-preview-meta {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.begin-workout-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none;
+  color: var(--bg);
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  padding: 18px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.begin-workout-btn:active {
+  filter: brightness(0.95);
+  transform: scale(0.98);
+}
+
+.cancel-workout-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-dim);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.cancel-workout-btn:active {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+.running-workout-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--accent);
+  background: rgba(200, 255, 61, 0.08);
+  color: var(--text);
+  font-size: 13.5px;
+  text-decoration: none;
+}
+
+.running-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(200, 255, 61, 0.2);
+  flex-shrink: 0;
+}
+
+/* Collapsible history sessions */
+
+.session-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-toggle-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.session-summary {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.session-chevron {
+  color: var(--text-faint);
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.session-card.open .session-chevron {
+  transform: rotate(180deg);
+}
+
+.session-card.open .session-toggle {
+  margin-bottom: 10px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-border);
+}
+
+.session-delete-btn {
+  margin-left: auto;
+  color: #ff6b6b;
+}

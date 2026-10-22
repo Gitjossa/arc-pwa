@@ -22,8 +22,9 @@ export interface LibraryExercise {
   name: string;
 }
 
+/** Only values the user typed themselves — suggestions from the previous session are never stored here. */
 export interface SetEntry {
-  reps: string;
+  reps?: string;
   kg?: string;
 }
 
@@ -73,7 +74,18 @@ export interface Settings {
   countdownEnd: string; // yyyy-mm-dd
 }
 
+/** The workout the user explicitly started. While set, the tracker is locked to this day. */
+export interface ActiveWorkout {
+  dayId: string;
+  startedAt: string; // ISO timestamp
+  /** Exercise ids shown collapsed (finished) — kept here so it survives navigating away. */
+  collapsed: string[];
+}
+
 export interface AppData {
+  /** Bumped when stored data needs a one-time migration. Missing means version 1. */
+  dataVersion?: number;
+  activeWorkout?: ActiveWorkout | null;
   program: Program;
   draft: DraftState;
   sessionExtras: SessionExtras;

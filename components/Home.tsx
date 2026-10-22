@@ -26,6 +26,7 @@ export default function Home() {
   const days = data.program.days;
   const streak = useMemo(() => currentStreakWeeks(history), [history]);
   const volume = useMemo(() => thisWeekVolume(history), [history]);
+  const runningDay = days.find((d) => d.id === data.activeWorkout?.dayId);
   const countdown = useMemo(
     () => countdownProgress(data.settings.countdownStart, data.settings.countdownEnd),
     [data.settings.countdownStart, data.settings.countdownEnd],
@@ -70,6 +71,15 @@ export default function Home() {
               : `Nog ${countdown.daysLeft} ${countdown.daysLeft === 1 ? "dag" : "dagen"} te gaan`}
           </p>
         </div>
+      )}
+
+      {runningDay && (
+        <Link href="/vandaag" className="running-workout-banner">
+          <span className="running-dot" aria-hidden="true" />
+          <span>
+            Workout bezig: <b>{runningDay.name}</b> — verder gaan
+          </span>
+        </Link>
       )}
 
       {days.length === 0 ? (

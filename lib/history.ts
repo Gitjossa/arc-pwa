@@ -1,5 +1,5 @@
 import { todayIso, weekBucket } from "./date";
-import type { WorkoutSession } from "./types";
+import type { LoggedSet, WorkoutSession } from "./types";
 
 export interface ExerciseOption {
   id: string;
@@ -44,7 +44,28 @@ export interface PersonalRecord {
   date: string;
 }
 
-/** Best logged weight per exercise across all history, keyed by exerciseId. */
+/** A set counts as a record if it's heavier, or equally heavy with more reps. */
+export function beatsRecord(weight: number, reps: number, record?: { weight: number; reps: string | number }): boolean {
+  if (!record) return true;
+  if (weight !== record.weight) return weight > record.weight;
+  return reps > (parseFloat(String(record.reps)) || 0);
+}
+
+/** The set of an exercise that would set the highest record (heaviest, then most reps), or null. */
+export function bestSetOf(
+  sets: { reps?: string; kg?: string }[],
+): { weight: number; reps: number; index: number } | null {
+  let best: { weight: number; reps: number; index: number } | null = null;
+  sets.forEach((set, index) => {
+    const weight = parseFloat(set.kg ?? "");
+    if (Number.isNaN(weight)) return;
+    const reps = parseFloat(set.reps ?? "") || 0;
+    if (!best || beatsRecord(weight, reps, best)) best = { weight, reps, index };
+  });
+  return best;
+}
+
+/** Best logged set per exercise across all history (heaviest, ties broken by reps), keyed by exerciseId. */
 export function personalRecords(history: WorkoutSession[]): Map<string, PersonalRecord> {
   const map = new Map<string, PersonalRecord>();
   for (const session of history) {
@@ -52,8 +73,9 @@ export function personalRecords(history: WorkoutSession[]): Map<string, Personal
       for (const set of ex.sets) {
         const weight = parseFloat(set.kg);
         if (Number.isNaN(weight)) continue;
+        const reps = parseFloat(set.reps) || 0;
         const current = map.get(ex.exerciseId);
-        if (!current || weight > current.weight) {
+        if (beatsRecord(weight, reps, current)) {
           map.set(ex.exerciseId, {
             exerciseId: ex.exerciseId,
             name: ex.name,
@@ -66,6 +88,28 @@ export function personalRecords(history: WorkoutSession[]): Map<string, Personal
     }
   }
   return map;
+}
+
+/** Names of exercises in `session` whose best set beat every session logged before it. */
+export function prNamesForSession(history: WorkoutSession[], session: WorkoutSession): string[] {
+  const idx = history.findIndex((s) => s.id === session.id);
+  const before = idx === -1 ? history : history.slice(idx + 1);
+  const records = personalRecords(before);
+  return session.exercises
+    .filter((ex) => {
+      const best = bestSetOf(ex.sets);
+      return best !== null && beatsRecord(best.weight, best.reps, records.get(ex.exerciseId));
+    })
+    .map((ex) => ex.name);
+}
+
+/** Sets from the most recent session containing this exercise (history is stored newest-first). */
+export function lastPerformance(history: WorkoutSession[], exerciseId: string): LoggedSet[] | undefined {
+  for (const session of history) {
+    const ex = session.exercises.find((e) => e.exerciseId === exerciseId);
+    if (ex && ex.sets.length) return ex.sets;
+  }
+  return undefined;
 }
 
 // ---- Volume ----

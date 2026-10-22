@@ -1,8 +1,10 @@
 import { todayIso } from "./date";
 import { DEFAULT_PROGRAM } from "./defaultProgram";
 import { DEFAULT_LIBRARY } from "./exerciseLibrary";
+import { lastPerformance } from "./history";
 import { createId } from "./id";
 import type {
+  ActiveWorkout,
   AppData,
   DayDef,
   DraftState,
@@ -15,8 +17,12 @@ import type {
 } from "./types";
 
 const STORAGE_KEY = "arc_app_data_v1";
+const BACKUP_KEY_V2 = "arc_app_data_v1_backup_pre_v2";
+const DATA_VERSION = 2;
 
 const DEFAULT_DATA: AppData = {
+  dataVersion: DATA_VERSION,
+  activeWorkout: null,
   program: { days: [] },
   draft: {},
   sessionExtras: {},
@@ -105,6 +111,51 @@ type Listener = () => void;
 let currentState: AppData | null = null;
 const listeners = new Set<Listener>();
 
+// ---- Migration v1 -> v2 ----
+//
+// v1 carried the previous session's values over in the draft as if they were typed, and any
+// number of days could be "in progress". v2 keeps only typed values in the draft and has one
+// explicit active workout. History is never modified here; a raw backup is stored first.
+
+function migrateToV2(data: AppData): AppData {
+  const doneByDay = new Map<string, string[]>();
+  for (const [key, rec] of Object.entries(data.draft)) {
+    if (!rec.done) continue;
+    const sep = key.indexOf("__");
+    if (sep === -1) continue;
+    const dayId = key.slice(0, sep);
+    doneByDay.set(dayId, [...(doneByDay.get(dayId) ?? []), key.slice(sep + 2)]);
+  }
+
+  let activeDayId: string | null = null;
+  let most = 0;
+  doneByDay.forEach((exerciseIds, dayId) => {
+    const dayExists = data.program.days.some((d) => d.id === dayId);
+    if (dayExists && exerciseIds.length > most) {
+      most = exerciseIds.length;
+      activeDayId = dayId;
+    }
+  });
+
+  if (!activeDayId) {
+    return { ...data, dataVersion: DATA_VERSION, activeWorkout: null, draft: {}, sessionExtras: {}, sessionHidden: {} };
+  }
+
+  const dayId: string = activeDayId;
+  const draft: DraftState = {};
+  for (const [key, rec] of Object.entries(data.draft)) {
+    if (key.startsWith(`${dayId}__`) && rec.done) draft[key] = rec;
+  }
+  return {
+    ...data,
+    dataVersion: DATA_VERSION,
+    activeWorkout: { dayId, startedAt: new Date().toISOString(), collapsed: doneByDay.get(dayId) ?? [] },
+    draft,
+    sessionExtras: data.sessionExtras[dayId] ? { [dayId]: data.sessionExtras[dayId] } : {},
+    sessionHidden: data.sessionHidden[dayId] ? { [dayId]: data.sessionHidden[dayId] } : {},
+  };
+}
+
 function readFromStorage(): AppData {
   if (typeof window === "undefined") return DEFAULT_DATA;
   try {
@@ -112,6 +163,8 @@ function readFromStorage(): AppData {
     if (!raw) return DEFAULT_DATA;
     const parsed = JSON.parse(raw) as Partial<AppData>;
     const base: AppData = {
+      dataVersion: parsed.dataVersion,
+      activeWorkout: parsed.activeWorkout ?? null,
       program: parsed.program ?? DEFAULT_DATA.program,
       draft: parsed.draft ?? {},
       sessionExtras: parsed.sessionExtras ?? {},
@@ -122,7 +175,21 @@ function readFromStorage(): AppData {
       // never re-trigger onboarding just because the flag predates this field.
       settings: { ...DEFAULT_DATA.settings, onboarded: true, ...parsed.settings },
     };
-    return linkLibrary(base);
+    const linked = linkLibrary(base);
+    if ((parsed.dataVersion ?? 1) >= DATA_VERSION) return linked;
+
+    try {
+      if (!window.localStorage.getItem(BACKUP_KEY_V2)) window.localStorage.setItem(BACKUP_KEY_V2, raw);
+    } catch {
+      // backup is best-effort; the migration itself never touches history
+    }
+    const migrated = migrateToV2(linked);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+    } catch {
+      // will be written on the next commit instead
+    }
+    return migrated;
   } catch {
     return DEFAULT_DATA;
   }
@@ -228,33 +295,108 @@ export function exerciseKey(dayId: string, exerciseId: string): string {
   return `${dayId}__${exerciseId}`;
 }
 
+/**
+ * The in-progress record for an exercise. `sets` only ever holds values the user typed; the
+ * number of rows follows what they did last time (falling back to the schema's set count).
+ */
 export function getRecord(
-  draft: DraftState,
+  data: Pick<AppData, "draft" | "history">,
   dayId: string,
   exercise: ExerciseDef,
 ): ExerciseRecord {
-  const key = exerciseKey(dayId, exercise.id);
-  const rec = draft[key];
-  const targetSets = Math.max(1, exercise.sets);
+  const rec = data.draft[exerciseKey(dayId, exercise.id)];
+  const lastCount = lastPerformance(data.history, exercise.libraryId)?.length;
+  const baseSets = Math.max(1, lastCount ?? exercise.sets);
   const existing = rec?.sets ?? [];
   // Once the user has explicitly added/removed a set this session, the stored
-  // length is authoritative; otherwise auto-size (and never shrink) to the schema.
-  const length = rec?.customSets ? Math.max(1, existing.length) : Math.max(targetSets, existing.length);
+  // length is authoritative; otherwise auto-size (and never shrink) to the base count.
+  const length = rec?.customSets ? Math.max(1, existing.length) : Math.max(baseSets, existing.length);
   const sets = Array.from({ length }, (_, i) => ({
-    reps: existing[i]?.reps || exercise.targetReps,
+    reps: existing[i]?.reps,
     kg: existing[i]?.kg,
   }));
   return { done: rec?.done ?? false, sets, customSets: rec?.customSets };
+}
+
+/** Light-grey suggestion for a set row, taken from the previous session of this exercise. */
+export function getSuggestion(
+  history: WorkoutSession[],
+  exercise: ExerciseDef,
+  setIdx: number,
+): { reps: string; kg: string } | null {
+  const last = lastPerformance(history, exercise.libraryId);
+  if (!last) return null;
+  const set = last[Math.min(setIdx, last.length - 1)];
+  return { reps: set.reps, kg: set.kg };
+}
+
+// ---- Active workout ----
+
+function withCollapsed(
+  active: ActiveWorkout | null | undefined,
+  dayId: string,
+  exerciseId: string,
+  collapsed: boolean,
+): ActiveWorkout | null | undefined {
+  if (!active || active.dayId !== dayId) return active;
+  const without = active.collapsed.filter((id) => id !== exerciseId);
+  return { ...active, collapsed: collapsed ? [...without, exerciseId] : without };
+}
+
+/** Removes every trace of an in-progress session for a day (draft, extras, skipped). */
+function clearDaySession(prev: AppData, dayId: string): AppData {
+  const nextDraft = { ...prev.draft };
+  for (const key of Object.keys(nextDraft)) {
+    if (key.startsWith(`${dayId}__`)) delete nextDraft[key];
+  }
+  const nextSessionExtras = { ...prev.sessionExtras };
+  delete nextSessionExtras[dayId];
+  const nextSessionHidden = { ...prev.sessionHidden };
+  delete nextSessionHidden[dayId];
+  return {
+    ...prev,
+    draft: nextDraft,
+    sessionExtras: nextSessionExtras,
+    sessionHidden: nextSessionHidden,
+    activeWorkout: null,
+  };
+}
+
+export function startWorkout(dayId: string): void {
+  update((prev) => {
+    const current = prev.activeWorkout;
+    // A leftover active workout whose day was deleted from the schema must not block starting a new one.
+    if (current && prev.program.days.some((d) => d.id === current.dayId)) return prev;
+    const fresh = clearDaySession(prev, dayId);
+    return {
+      ...fresh,
+      activeWorkout: { dayId, startedAt: new Date().toISOString(), collapsed: [] },
+    };
+  });
+}
+
+/** Throws away the in-progress session only. History is never touched. */
+export function cancelWorkout(): void {
+  const active = getState().activeWorkout;
+  if (!active) return;
+  pushUndo("Workout geannuleerd");
+  update((prev) => (prev.activeWorkout ? clearDaySession(prev, prev.activeWorkout.dayId) : prev));
+}
+
+export function setExerciseCollapsed(dayId: string, exerciseId: string, collapsed: boolean): void {
+  update((prev) => ({ ...prev, activeWorkout: withCollapsed(prev.activeWorkout, dayId, exerciseId, collapsed) }));
 }
 
 // ---- Draft (today's session) ----
 
 export function toggleDone(dayId: string, exercise: ExerciseDef): void {
   update((prev) => {
-    const rec = getRecord(prev.draft, dayId, exercise);
+    if (!prev.activeWorkout) return prev;
+    const rec = getRecord(prev, dayId, exercise);
     return {
       ...prev,
       draft: { ...prev.draft, [exerciseKey(dayId, exercise.id)]: { ...rec, done: !rec.done } },
+      activeWorkout: withCollapsed(prev.activeWorkout, dayId, exercise.id, !rec.done),
     };
   });
 }
@@ -267,25 +409,31 @@ export function commitSetField(
   value: string,
 ): void {
   update((prev) => {
-    const rec = getRecord(prev.draft, dayId, exercise);
-    const sets = rec.sets.map((s, i) => (i === setIdx ? { ...s, [field]: value } : s));
-    // All sets filled in? Check the exercise off automatically. Never auto-uncheck —
-    // a manual uncheck (e.g. to redo a set) always stays respected.
+    if (!prev.activeWorkout) return prev;
+    const rec = getRecord(prev, dayId, exercise);
+    const sets = rec.sets.map((s, i) => (i === setIdx ? { ...s, [field]: value || undefined } : s));
+    // Every set typed in (reps + weight)? Check the exercise off and collapse it. Only values the
+    // user typed count — never suggestions. Never auto-uncheck: a manual uncheck stays respected.
     const allFilled = sets.every((s) => s.reps && s.kg);
+    const becomesDone = allFilled && !rec.done;
     return {
       ...prev,
       draft: {
         ...prev.draft,
         [exerciseKey(dayId, exercise.id)]: { ...rec, sets, done: allFilled ? true : rec.done },
       },
+      activeWorkout: becomesDone
+        ? withCollapsed(prev.activeWorkout, dayId, exercise.id, true)
+        : prev.activeWorkout,
     };
   });
 }
 
 export function addDraftSet(dayId: string, exercise: ExerciseDef): void {
   update((prev) => {
-    const rec = getRecord(prev.draft, dayId, exercise);
-    const sets = [...rec.sets, { reps: exercise.targetReps }];
+    if (!prev.activeWorkout) return prev;
+    const rec = getRecord(prev, dayId, exercise);
+    const sets = [...rec.sets, {}];
     return {
       ...prev,
       draft: { ...prev.draft, [exerciseKey(dayId, exercise.id)]: { ...rec, sets, customSets: true } },
@@ -295,7 +443,8 @@ export function addDraftSet(dayId: string, exercise: ExerciseDef): void {
 
 export function removeDraftSet(dayId: string, exercise: ExerciseDef, setIdx: number): void {
   update((prev) => {
-    const rec = getRecord(prev.draft, dayId, exercise);
+    if (!prev.activeWorkout) return prev;
+    const rec = getRecord(prev, dayId, exercise);
     if (rec.sets.length <= 1) return prev;
     const sets = rec.sets.filter((_, i) => i !== setIdx);
     return {
@@ -373,7 +522,7 @@ export function finishWorkout(day: DayDef): WorkoutSession | null {
 
     const loggedExercises = allExercises
       .map((exercise) => {
-        const rec = getRecord(prev.draft, day.id, exercise);
+        const rec = getRecord(prev, day.id, exercise);
         const filled = rec.sets.filter((s) => s.reps && s.kg) as { reps: string; kg: string }[];
         return filled.length ? { exerciseId: exercise.libraryId, name: exercise.name, sets: filled } : null;
       })
@@ -392,31 +541,17 @@ export function finishWorkout(day: DayDef): WorkoutSession | null {
       createdSession = session;
     }
 
-    const nextDraft = { ...prev.draft };
-    day.exercises.forEach((exercise) => {
-      const rec = getRecord(nextDraft, day.id, exercise);
-      nextDraft[exerciseKey(day.id, exercise.id)] = { ...rec, done: false, customSets: false };
-    });
-    // Ad-hoc exercises are session-only: drop their draft state once archived.
-    extras.forEach((exercise) => {
-      delete nextDraft[exerciseKey(day.id, exercise.id)];
-    });
-
-    const nextSessionExtras = { ...prev.sessionExtras };
-    delete nextSessionExtras[day.id];
-
-    const nextSessionHidden = { ...prev.sessionHidden };
-    delete nextSessionHidden[day.id];
-
-    return {
-      ...prev,
-      draft: nextDraft,
-      history: nextHistory,
-      sessionExtras: nextSessionExtras,
-      sessionHidden: nextSessionHidden,
-    };
+    // Back to the saved schema: drop the whole in-progress session (draft, extras, skipped)
+    // and end the active workout.
+    return { ...clearDaySession(prev, day.id), history: nextHistory };
   });
   return createdSession;
+}
+
+/** Permanently removes one logged workout. Everything derived from history (PRs, streak) follows. */
+export function deleteHistorySession(sessionId: string): void {
+  pushUndo("Workout verwijderd");
+  update((prev) => ({ ...prev, history: prev.history.filter((s) => s.id !== sessionId) }));
 }
 
 // ---- Program editing ----
@@ -622,17 +757,18 @@ export function importData(json: string): { ok: true } | { ok: false; error: str
     return { ok: false, error: "Dit bestand bevat geen geldige Arc-data." };
   }
   const data = parsed as Partial<AppData>;
-  commit(
-    linkLibrary({
-      program: data.program ?? DEFAULT_DATA.program,
-      draft: data.draft ?? {},
-      sessionExtras: data.sessionExtras ?? {},
-      sessionHidden: data.sessionHidden ?? {},
-      history: data.history ?? [],
-      library: data.library ?? [],
-      settings: { ...DEFAULT_DATA.settings, ...data.settings },
-    }),
-  );
+  const linked = linkLibrary({
+    dataVersion: data.dataVersion,
+    activeWorkout: data.activeWorkout ?? null,
+    program: data.program ?? DEFAULT_DATA.program,
+    draft: data.draft ?? {},
+    sessionExtras: data.sessionExtras ?? {},
+    sessionHidden: data.sessionHidden ?? {},
+    history: data.history ?? [],
+    library: data.library ?? [],
+    settings: { ...DEFAULT_DATA.settings, ...data.settings },
+  });
+  commit((data.dataVersion ?? 1) >= DATA_VERSION ? linked : migrateToV2(linked));
   return { ok: true };
 }
 
