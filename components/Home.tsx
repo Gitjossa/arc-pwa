@@ -7,6 +7,7 @@ import { countdownProgress } from "@/lib/countdown";
 import { currentStreakWeeks, thisWeekVolume } from "@/lib/history";
 import { getServerSnapshot, getSnapshot, subscribe } from "@/lib/store";
 import type { DayDef } from "@/lib/types";
+import { SettingsIcon } from "./icons";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -34,6 +35,9 @@ export default function Home() {
 
   return (
     <div className="wrap home-wrap">
+      <Link href="/instellingen" className="home-settings-btn" aria-label="Instellingen">
+        <SettingsIcon active />
+      </Link>
       <div className="home-header">
         <p className="home-greeting">{greeting()}</p>
         <h1>Klaar om te trainen?</h1>

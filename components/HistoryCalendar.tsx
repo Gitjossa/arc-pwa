@@ -83,12 +83,11 @@ export default function HistoryCalendar({
             <button
               key={cell.iso}
               type="button"
-              className={`calendar-cell${isToday ? " today" : ""}${isSelected ? " selected" : ""}`}
+              className={`calendar-cell${isToday ? " today" : ""}${isSelected ? " selected" : ""}${hasSession ? " has-session" : ""}`}
               onClick={() => onSelect(isSelected ? null : cell.iso)}
               disabled={!hasSession}
             >
               {cell.day}
-              {hasSession && <span className="calendar-dot" />}
             </button>
           );
         })}

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HistoryIcon, HomeIcon, SchemaIcon, SettingsIcon, TodayIcon } from "./icons";
+import { DumbbellIcon, HistoryIcon, HomeIcon, PlayIcon, SchemaIcon } from "./icons";
 
 const TABS = [
   { href: "/", label: "Home", Icon: HomeIcon },
   { href: "/schema", label: "Schema", Icon: SchemaIcon },
-  { href: "/vandaag", label: "Vandaag", Icon: TodayIcon, primary: true },
+  { href: "/vandaag", label: "Start", Icon: PlayIcon, primary: true },
   { href: "/historie", label: "Historie", Icon: HistoryIcon },
-  { href: "/instellingen", label: "Instellingen", Icon: SettingsIcon },
+  { href: "/oefeningen", label: "Oefeningen", Icon: DumbbellIcon },
 ];
 
 export default function TabBar() {

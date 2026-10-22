@@ -634,6 +634,22 @@ export function updateExercise(
   }));
 }
 
+export function reorderExercise(dayId: string, fromIdx: number, toIdx: number): void {
+  update((prev) => ({
+    ...prev,
+    program: {
+      days: prev.program.days.map((d) => {
+        if (d.id !== dayId || fromIdx === toIdx) return d;
+        if (fromIdx < 0 || toIdx < 0 || fromIdx >= d.exercises.length || toIdx >= d.exercises.length) return d;
+        const exercises = [...d.exercises];
+        const [moved] = exercises.splice(fromIdx, 1);
+        exercises.splice(toIdx, 0, moved);
+        return { ...d, exercises };
+      }),
+    },
+  }));
+}
+
 export function deleteExercise(dayId: string, exerciseId: string): void {
   pushUndo("Oefening verwijderd");
   update((prev) => ({

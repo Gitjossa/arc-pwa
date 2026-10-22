@@ -47,10 +47,11 @@ body {
   normal flex sibling that can never be scrolled under or detached.
 */
 .app-shell {
-  position: relative;
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  background: var(--bg);
 }
 
 .app-scroll {
@@ -73,9 +74,7 @@ body {
 .tab-bar {
   flex-shrink: 0;
   display: flex;
-  background: rgba(19, 20, 22, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: #131416;
   border-top: 1px solid var(--card-border);
   padding: 8px 6px calc(env(safe-area-inset-bottom, 0px) + 8px);
 }
@@ -2024,6 +2023,10 @@ h1 {
   cursor: pointer;
 }
 
+.begin-workout-btn.begin-top {
+  margin: 16px 0 4px;
+}
+
 .begin-workout-btn:active {
   filter: brightness(0.95);
   transform: scale(0.98);
@@ -2127,4 +2130,143 @@ h1 {
 .session-delete-btn {
   margin-left: auto;
   color: #ff6b6b;
+}
+
+/* Navigation / layout round: settings gear, calendar, drag handle, library page */
+
+.home-wrap {
+  position: relative;
+}
+
+.home-settings-btn {
+  position: absolute;
+  top: calc(12px);
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-dim);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+
+.home-settings-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.calendar-cell.has-session {
+  background: rgba(200, 255, 61, 0.18);
+  color: var(--accent-2);
+  border-radius: 50%;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.calendar-cell.has-session.selected {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--bg);
+  box-shadow: none;
+}
+
+.calendar-cell.today:not(.has-session) {
+  border-radius: 50%;
+}
+
+.day-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.day-toggle-count {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.day-chevron {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 16px;
+  transition: transform 0.15s ease;
+}
+
+.day-card.open .day-chevron {
+  transform: rotate(180deg);
+}
+
+.ex-row-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ex-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.drag-handle {
+  flex-shrink: 0;
+  width: 26px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ex-row.dragging {
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  border-color: var(--accent);
+}
+
+.ex-row.shifting {
+  transition: transform 0.15s ease;
+}
+
+.ex-list.is-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.library-list.tall {
+  max-height: none;
+}
+
+.day-name-static {
+  border-bottom: none;
+  padding: 4px 2px;
+}
+
+.day-chevron-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.ex-row-fields .row-actions {
+  margin-left: auto;
+  align-self: center;
 }

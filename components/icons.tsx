@@ -32,8 +32,26 @@ export function TodayIcon({ active }: IconProps) {
 export function SchemaIcon({ active }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...common} opacity={active ? 1 : 0.6}>
-      <path d="M4 6h16M4 12h16M4 18h10" />
-      <circle cx="19.5" cy="18" r="1.4" fill="currentColor" stroke="none" opacity={active ? 1 : 0} />
+      <rect x="3.5" y="4.5" width="17" height="16" rx="3" />
+      <path d="M3.5 9.5h17" />
+      <path d="M8 3v3M16 3v3" />
+      <path d="M8 13h2M14 13h2M8 16.5h2" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ active }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...common} opacity={active ? 1 : 0.6}>
+      <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function DumbbellIcon({ active }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...common} opacity={active ? 1 : 0.6}>
+      <path d="M7 8v8M17 8v8M4 10v4M20 10v4M7 12h10" />
     </svg>
   );
 }

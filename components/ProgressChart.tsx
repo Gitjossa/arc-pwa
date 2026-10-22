@@ -23,8 +23,12 @@ export default function ProgressChart({ points, unit }: { points: SeriesPoint[];
   const plotWidth = WIDTH - PAD_X * 2;
   const plotHeight = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
+  // X follows real calendar time, so the whole span from the first to the last logged set is visible.
+  const t0 = new Date(points[0].date).getTime();
+  const span = new Date(points[points.length - 1].date).getTime() - t0;
   const coords = points.map((p, i) => {
-    const x = points.length === 1 ? PAD_X + plotWidth / 2 : PAD_X + (i / (points.length - 1)) * plotWidth;
+    const frac = span > 0 ? (new Date(p.date).getTime() - t0) / span : i / Math.max(1, points.length - 1);
+    const x = points.length === 1 ? PAD_X + plotWidth / 2 : PAD_X + frac * plotWidth;
     const y = PAD_TOP + (1 - (p.maxKg - min) / range) * plotHeight;
     return { x, y, point: p };
   });

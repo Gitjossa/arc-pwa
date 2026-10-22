@@ -156,7 +156,7 @@ export default function WorkoutTracker() {
         />
       )}
       <div className="brand-row">
-        <h1>Trainingslog</h1>
+        <h1>{isActive ? "Workout" : "Start"}</h1>
         <span className="active-day-tag">{dayLabel(day)}</span>
       </div>
       <p className="subtitle">
@@ -191,6 +191,9 @@ export default function WorkoutTracker() {
 
       {!isActive && total > 0 && (
         <>
+          <button type="button" className="begin-workout-btn begin-top" onClick={() => startWorkout(day.id)}>
+            &#9654; Start workout
+          </button>
           <div className="preview-list">
             {day.exercises.map((exercise) => {
               const last = lastPerformance(data.history, exercise.libraryId);
@@ -206,9 +209,6 @@ export default function WorkoutTracker() {
               );
             })}
           </div>
-          <button type="button" className="begin-workout-btn" onClick={() => startWorkout(day.id)}>
-            Start workout
-          </button>
         </>
       )}
 
