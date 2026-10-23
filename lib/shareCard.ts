@@ -172,19 +172,21 @@ export async function drawShareCard(canvas: HTMLCanvasElement, data: ShareCardDa
   ctx.clip();
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, markSize, markSize);
-  ctx.scale(markSize / 512, markSize / 512);
+  ctx.scale(markSize / 527, markSize / 527);
   ctx.strokeStyle = "#c8ff3d";
-  ctx.lineWidth = 58;
+  ctx.fillStyle = "#c8ff3d";
+  ctx.lineWidth = 55.0015;
   ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.stroke(new Path2D("M166 392V256C166 191 206 146 256 146C306 146 346 191 346 256V392"));
-  ctx.fillStyle = "#ffc633";
-  roundRect(ctx, 104, 288, 304, 26, 13);
-  ctx.fill();
-  roundRect(ctx, 84, 250, 36, 102, 12);
-  ctx.fill();
-  roundRect(ctx, 392, 250, 36, 102, 12);
-  ctx.fill();
+  ctx.stroke(
+    new Path2D(
+      "M179.776 362.949C179.776 268.006 157.514 164.551 260.969 164.551C364.423 164.551 348.054 266.696 348.054 362.949",
+    ),
+  );
+  ctx.fill(
+    new Path2D(
+      "M246.513 311.876C261.701 311.876 274.013 299.563 274.013 284.375C274.013 269.187 261.701 256.874 246.513 256.874V284.375V311.876ZM179.725 284.375V311.876H246.513V284.375V256.874H179.725V284.375Z",
+    ),
+  );
   ctx.restore();
 
   ctx.fillStyle = "#f2f5ee";
