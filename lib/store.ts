@@ -305,14 +305,15 @@ export function getRecord(
   exercise: ExerciseDef,
 ): ExerciseRecord {
   const rec = data.draft[exerciseKey(dayId, exercise.id)];
-  const lastCount = lastPerformance(data.history, exercise.libraryId)?.length;
-  const baseSets = Math.max(1, lastCount ?? exercise.sets);
+  const last = lastPerformance(data.history, exercise.libraryId);
+  const baseSets = Math.max(1, last?.length ?? exercise.sets);
   const existing = rec?.sets ?? [];
   // Once the user has explicitly added/removed a set this session, the stored
   // length is authoritative; otherwise auto-size (and never shrink) to the base count.
   const length = rec?.customSets ? Math.max(1, existing.length) : Math.max(baseSets, existing.length);
+  // Reps default to what the user did last time (editable); only the weight must be typed to count.
   const sets = Array.from({ length }, (_, i) => ({
-    reps: existing[i]?.reps,
+    reps: existing[i]?.reps ?? (last ? last[Math.min(i, last.length - 1)].reps : exercise.targetReps),
     kg: existing[i]?.kg,
   }));
   return { done: rec?.done ?? false, sets, customSets: rec?.customSets };

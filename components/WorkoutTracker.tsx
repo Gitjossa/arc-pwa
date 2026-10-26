@@ -387,7 +387,7 @@ export default function WorkoutTracker() {
                               <RepsInput
                                 resetKey={resetKey}
                                 value={setRec.reps ?? ""}
-                                placeholder={suggestion?.reps ?? exercise.targetReps}
+                                placeholder={exercise.targetReps}
                                 onCommit={(v) => commitSetField(day.id, exercise, setIdx, "reps", v)}
                               />
                               <KgInput
@@ -457,7 +457,7 @@ export default function WorkoutTracker() {
 
       <p className="note">
         {isActive
-          ? "Grijze cijfers zijn je waarden van de vorige keer — vul ze zelf in om te loggen."
+          ? "Reps staan alvast op je vorige keer. Het grijze gewicht is van de vorige keer: vul je gewicht zelf in om te loggen."
           : "Je workout wordt pas gelogd nadat je hem start en afrondt."}
       </p>
     </div>
