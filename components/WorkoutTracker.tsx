@@ -94,9 +94,26 @@ export default function WorkoutTracker() {
   const isActive = active !== null && activeIdx >= 0;
   const dayIdx = isActive ? activeIdx : activeDay !== null ? Math.min(activeDay, days.length - 1) : -1;
 
+  // Shown on every view, including the "choose a workout" screen the page falls back to after finishing.
+  const overlays = (
+    <>
+      <FinishCelebration show={celebrating} />
+      {shareSession && (
+        <ShareCardModal
+          session={shareSession}
+          unit={data.settings.unit}
+          newPrNames={sharePrNames}
+          streakWeeks={shareStreakWeeks}
+          onClose={() => setShareSession(null)}
+        />
+      )}
+    </>
+  );
+
   if (dayIdx === -1) {
     return (
       <div className="wrap">
+        {overlays}
         <div className="brand-row">
           <h1>Start</h1>
         </div>
@@ -173,16 +190,7 @@ export default function WorkoutTracker() {
 
   return (
     <div className="wrap">
-      <FinishCelebration show={celebrating} />
-      {shareSession && (
-        <ShareCardModal
-          session={shareSession}
-          unit={unit}
-          newPrNames={sharePrNames}
-          streakWeeks={shareStreakWeeks}
-          onClose={() => setShareSession(null)}
-        />
-      )}
+      {overlays}
       <div className="brand-row">
         <h1>{isActive ? "Workout" : "Start"}</h1>
         <span className="active-day-tag">{dayLabel(day)}</span>
